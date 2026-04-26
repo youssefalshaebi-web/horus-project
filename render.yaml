@@ -1,0 +1,26 @@
+# Render Blueprint — خدمة ويب للـ API (مجلد server/)
+# New → Blueprint → اربط مستودع Git الذي يحتوي هذا الملف في الجذر.
+#
+# بعد النشر: انسخ عنوان الخدمة (مثل https://horus-api.onrender.com)
+# واضبط في Netlify (أو ملف .env عند البناء): VITE_API_BASE_URL=https://...
+#
+# ملاحظات:
+# - الطبقة المجانية: القرص مؤقت — أعد النشر قد يمسح البيانات في server/data. للإنتاج أضف Render Disk
+#   من اللوحة ووجّهه إلى المسار الذي يحفظه التطبيق (مجلد data بجانب ملفات السيرفر).
+# - عيّن ADMIN_PASSWORD و JWT_SECRET في قسم Environment (لا تُرفع في Git).
+
+services:
+  - type: web
+    name: horus-api
+    runtime: node
+    region: frankfurt
+    buildCommand: npm install --prefix server
+    startCommand: npm start --prefix server
+    healthCheckPath: /api/settings
+    envVars:
+      - key: NODE_VERSION
+        value: "22.12.0"
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        sync: false

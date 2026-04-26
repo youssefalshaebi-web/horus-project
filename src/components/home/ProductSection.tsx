@@ -1,3 +1,4 @@
+import { resolveMediaUrl } from '../../config'
 import type { Product } from '../../types'
 import { ProductCard } from '../ProductCard'
 
@@ -30,7 +31,7 @@ export function ProductSection({
     >
       {bannerImage ? (
         <div className="product-section-banner">
-          <img src={bannerImage} alt="" className="product-section-banner-img" loading="lazy" />
+          <img src={resolveMediaUrl(bannerImage)} alt="" className="product-section-banner-img" loading="lazy" />
         </div>
       ) : null}
       <header className="product-section-head">

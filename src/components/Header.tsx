@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useShopChrome } from '../context/ShopChromeContext'
 import { NavDrawer } from './NavDrawer'
 import { SearchDrawer } from './SearchDrawer'
+import { resolveMediaUrl } from '../config'
 import type { Product } from '../types'
 
 const LOGO_FALLBACK = '/horus-logo.png'
@@ -81,7 +82,7 @@ export function Header({ products, onOpenCart, itemCount, logoSrc, logoAlt }: Pr
           <div className="header-brand-center">
             <Link to="/" className="brand-lockup" onClick={closeMenu}>
               <img
-                src={logoSrc.trim() || LOGO_FALLBACK}
+                src={resolveMediaUrl(logoSrc.trim()) || LOGO_FALLBACK}
                 alt={logoAlt.trim() || 'Logo'}
                 className="brand-logo-img"
                 width={48}

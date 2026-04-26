@@ -1,3 +1,4 @@
+import { resolveMediaUrl } from '../../config'
 import type { HomeSectionConfig } from '../../types'
 import { tileHrefForSection } from '../../utils/homeNav'
 
@@ -24,7 +25,9 @@ export function CategoryTiles({ categoriesBlockTitle, sections }: Props) {
             className={t.tileImage.trim() ? 'category-tile category-tile-image' : 'category-tile'}
             style={
               t.tileImage.trim()
-                ? { backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.65), rgba(0,0,0,0.2)), url(${t.tileImage.trim()})` }
+                ? {
+                    backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.65), rgba(0,0,0,0.2)), url(${resolveMediaUrl(t.tileImage.trim())})`,
+                  }
                 : undefined
             }
           >

@@ -1,3 +1,4 @@
+import { resolveMediaUrl } from '../../config'
 import type { StorefrontPromoPlacement, StorefrontPromoSlot } from '../../types'
 
 function PromoSlotItem({ slot }: { slot: StorefrontPromoSlot }) {
@@ -41,7 +42,7 @@ function PromoSlotItem({ slot }: { slot: StorefrontPromoSlot }) {
   return (
     <div className="promo-card">
       {slot.imageUrl.trim() ? (
-        <img src={slot.imageUrl.trim()} alt="" className="promo-card-img" />
+        <img src={resolveMediaUrl(slot.imageUrl.trim())} alt="" className="promo-card-img" />
       ) : null}
       <div className="promo-card-body">
         {slot.title.trim() ? <h3 className="promo-card-title">{slot.title.trim()}</h3> : null}

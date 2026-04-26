@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useShopChrome } from '../context/ShopChromeContext'
+import { resolveMediaUrl } from '../config'
 import type { Product } from '../types'
 import { formatPrice } from '../utils/formatPrice'
 import { filterProductsByQuery } from '../utils/searchProducts'
@@ -121,7 +122,7 @@ export function SearchDrawer({ products, open, onClose }: Props) {
                     onClick={() => handlePickProduct(p.id)}
                   >
                     <img
-                      src={p.image}
+                      src={resolveMediaUrl(p.image)}
                       alt=""
                       className="search-drawer-result-img"
                       width={48}

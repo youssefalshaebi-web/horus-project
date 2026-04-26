@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext'
 import { SiteFooter } from '../components/home/SiteFooter'
 import { StorefrontPromoStrip } from '../components/storefront/StorefrontPromoStrip'
 import type { ShopOutletContext } from '../types'
+import { resolveMediaUrl } from '../config'
 import { formatPrice } from '../utils/formatPrice'
 import { productCategoryLabelAr } from '../utils/productCategoryLabel'
 import { productGalleryUrls } from '../utils/productGallery'
@@ -176,7 +177,10 @@ export function ProductDetailPage() {
     [products, productId],
   )
 
-  const gallery = useMemo(() => (product ? productGalleryUrls(product) : []), [product])
+  const gallery = useMemo(
+    () => (product ? productGalleryUrls(product).map(resolveMediaUrl) : []),
+    [product],
+  )
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -268,7 +272,7 @@ export function ProductDetailPage() {
                   <li key={idx} className="pd-inspired-row">
                     {product.inspiredImage && idx === 0 ? (
                       <img
-                        src={product.inspiredImage}
+                        src={resolveMediaUrl(product.inspiredImage)}
                         alt=""
                         className="pd-inspired-bottle"
                         width={44}
@@ -284,7 +288,7 @@ export function ProductDetailPage() {
                   <li className="pd-inspired-row">
                     {product.inspiredImage ? (
                       <img
-                        src={product.inspiredImage}
+                        src={resolveMediaUrl(product.inspiredImage)}
                         alt=""
                         className="pd-inspired-bottle"
                         width={44}

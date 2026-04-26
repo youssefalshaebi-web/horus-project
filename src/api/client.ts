@@ -1,3 +1,5 @@
+import { apiUrl, getApiBaseUrl } from '../config'
+
 const ADMIN_KEY = 'horus_admin_token'
 
 export function getAdminToken(): string | null {
@@ -21,7 +23,7 @@ export async function apiJson<T>(
   }
   const token = getAdminToken()
   if (token) headers.set('Authorization', `Bearer ${token}`)
-  const r = await fetch(path, { ...init, headers })
+  const r = await fetch(apiUrl(path), { ...init, headers })
   const text = await r.text()
   let data: unknown
   try {
@@ -53,7 +55,7 @@ export async function apiUploadImage(file: Blob, filename = 'upload.jpg'): Promi
   const headers = new Headers()
   const token = getAdminToken()
   if (token) headers.set('Authorization', `Bearer ${token}`)
-  const r = await fetch('/api/admin/upload', { method: 'POST', body: fd, headers })
+  const r = await fetch(apiUrl('/api/admin/upload'), { method: 'POST', body: fd, headers })
   const text = await r.text()
   let data: unknown
   try {
@@ -69,7 +71,12 @@ export async function apiUploadImage(file: Blob, filename = 'upload.jpg'): Promi
     throw new Error(msg)
   }
   if (typeof data === 'object' && data !== null && 'url' in data && typeof (data as UploadRes).url === 'string') {
-    return data as UploadRes
+    const base = getApiBaseUrl()
+    let url = (data as UploadRes).url
+    if (base && url.startsWith('/')) {
+      url = `${base}${url}`
+    }
+    return { url }
   }
   throw new Error('استجابة غير متوقعة من الخادم')
 }

@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { Link, useNavigate, useOutletContext } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
+import { resolveMediaUrl } from '../config'
 import { formatPrice } from '../utils/formatPrice'
 import type { ShopOutletContext } from '../types'
 import { maxOrderableQty } from '../utils/stock'
@@ -37,7 +38,7 @@ export function CartPreviewPage() {
               return (
                 <li key={line.productId} className="cart-preview-line">
                   <div className="cart-preview-line-img-wrap">
-                    <img src={p.image} alt="" className="cart-preview-line-img" />
+                    <img src={resolveMediaUrl(p.image)} alt="" className="cart-preview-line-img" />
                   </div>
                   <div className="cart-preview-line-body">
                     <span className="cart-preview-line-name">{p.name}</span>

@@ -1,3 +1,5 @@
+import { resolveMediaUrl } from '../../config'
+
 type Props = {
   title: string
   subtitle: string
@@ -15,7 +17,7 @@ export function HomeHero({ title, subtitle, imageUrl }: Props) {
       </div>
       {imageUrl ? (
         <div className="home-hero-visual">
-          <img src={imageUrl} alt="" className="home-hero-img" loading="lazy" />
+          <img src={resolveMediaUrl(imageUrl)} alt="" className="home-hero-img" loading="lazy" />
         </div>
       ) : null}
     </section>

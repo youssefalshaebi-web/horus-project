@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { resolveMediaUrl } from '../config'
 import type { Product } from '../types'
 import { formatPrice } from '../utils/formatPrice'
 import { isProductOutOfStock, maxOrderableQty } from '../utils/stock'
@@ -29,7 +30,7 @@ export function ProductCard({ product, onAdd }: Props) {
       <Link to={`/product/${encodeURIComponent(product.id)}`} className="product-card-link">
         <div className="product-image-wrap">
           <img
-            src={product.image}
+            src={resolveMediaUrl(product.image)}
             alt={product.name}
             className="product-image"
             loading="lazy"
@@ -41,7 +42,7 @@ export function ProductCard({ product, onAdd }: Props) {
           <div className="product-inspired">
             {product.inspiredImage ? (
               <img
-                src={product.inspiredImage}
+                src={resolveMediaUrl(product.inspiredImage)}
                 alt=""
                 className="product-inspired-thumb"
                 width={40}

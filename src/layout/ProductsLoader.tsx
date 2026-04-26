@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { CartProvider } from '../context/CartContext'
+import { apiUrl } from '../config'
 import { defaultPublicSiteSettings } from '../siteDefaults'
 import { applySiteThemeToDocument } from '../siteThemeDefaults'
 import type { Product, PublicSiteSettings, ShopOutletContext } from '../types'
@@ -30,8 +31,8 @@ export function ProductsLoader() {
     ;(async () => {
       try {
         const [pr, st] = await Promise.all([
-          fetch('/api/products').then((r) => r.json()),
-          fetch('/api/settings').then((r) => r.json()),
+          fetch(apiUrl('/api/products')).then((r) => r.json()),
+          fetch(apiUrl('/api/settings')).then((r) => r.json()),
         ])
         if (cancelled) return
         const list = Array.isArray(pr.products) ? pr.products.map(normalizeProduct) : []
