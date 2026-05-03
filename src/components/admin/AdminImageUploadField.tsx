@@ -10,9 +10,18 @@ type Props = {
   /** عرض÷ارتفاع منطقة القص (مثال: 16/9 للهيرو، 1 للشعار، 4/5 لصورة منتج) */
   aspect: number
   hint?: string
+  /** عند التعيين: لا يُقبل حقل فارغ (يُستبدل فوراً بهذا المسار بعد لصق أو حذف النص) */
+  disallowEmpty?: string
 }
 
-export function AdminImageUploadField({ label, value, onChange, aspect, hint }: Props) {
+export function AdminImageUploadField({
+  label,
+  value,
+  onChange,
+  aspect,
+  hint,
+  disallowEmpty,
+}: Props) {
   const inputId = useId()
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -76,7 +85,11 @@ export function AdminImageUploadField({ label, value, onChange, aspect, hint }: 
             id={inputId}
             type="text"
             value={value}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(e) => {
+              const v = e.target.value
+              if (disallowEmpty && !v.trim()) onChange(disallowEmpty)
+              else onChange(v)
+            }}
             placeholder="https://… أو ارفع صورة"
             dir="ltr"
           />

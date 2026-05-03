@@ -1,4 +1,8 @@
+import { useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
+import { resolveMediaUrl } from '../config'
+import { productPrimaryImageUrl } from '../constants/productMedia'
 import { formatPrice } from '../utils/formatPrice'
 import type { Product, UiCart } from '../types'
 import { maxOrderableQty } from '../utils/stock'
@@ -9,10 +13,20 @@ type Props = {
   onCheckout: () => void
   productsById: Map<string, Product>
   ui: UiCart
+  /** نص توضيحي — مثلاً إكمال الطلب عبر واتساب */
+  whatsappHint?: string
 }
 
-export function CartPanel({ open, onClose, onCheckout, productsById, ui }: Props) {
-  const { lines, subtotal, setQuantity, removeLine } = useCart()
+export function CartPanel({ open, onClose, onCheckout, productsById, ui, whatsappHint }: Props) {
+  const { lines, subtotal, setQuantity, removeLine, addToCart } = useCart()
+
+  const suggested = useMemo(() => {
+    const list = [...productsById.values()].filter(
+      (p) =>
+        (p.category === 'womens' || p.category === 'mens') && maxOrderableQty(p) !== 0,
+    )
+    return list.slice(0, 3)
+  }, [productsById])
 
   if (!open) return null
 
@@ -33,7 +47,42 @@ export function CartPanel({ open, onClose, onCheckout, productsById, ui }: Props
         </div>
 
         {lines.length === 0 ? (
-          <p className="cart-empty">{ui.emptyMessage}</p>
+          <div className="cart-empty-block">
+            <p className="cart-empty">{ui.emptyMessage}</p>
+            {suggested.length > 0 ? (
+              <div className="cart-suggested">
+                <p className="cart-suggested-title">قد يعجبك أيضاً</p>
+                <ul className="cart-suggested-list">
+                  {suggested.map((p) => (
+                    <li key={p.id} className="cart-suggested-row">
+                      <Link
+                        to={`/product/${encodeURIComponent(p.id)}`}
+                        className="cart-suggested-link"
+                        onClick={onClose}
+                      >
+                        <img
+                          src={resolveMediaUrl(productPrimaryImageUrl(p.image))}
+                          alt=""
+                          className="cart-suggested-img"
+                          width={48}
+                          height={48}
+                        />
+                        <span className="cart-suggested-name">{p.name}</span>
+                        <span className="cart-suggested-price">{formatPrice(p.price)}</span>
+                      </Link>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm cart-suggested-add"
+                        onClick={() => addToCart(p.id)}
+                      >
+                        أضف
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
         ) : (
           <ul className="cart-lines">
             {lines.map((line) => {
@@ -83,6 +132,7 @@ export function CartPanel({ open, onClose, onCheckout, productsById, ui }: Props
 
         {lines.length > 0 ? (
           <div className="cart-panel-foot">
+            {whatsappHint ? <p className="cart-whatsapp-hint">{whatsappHint}</p> : null}
             <div className="cart-total-row">
               <span>{ui.totalLabel}</span>
               <strong>{formatPrice(subtotal)}</strong>

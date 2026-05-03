@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { Link, Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { SiteFooter } from '../components/home/SiteFooter'
+import { ProductShareRow } from '../components/ProductShareRow'
+import { SimilarProductsStrip } from '../components/SimilarProductsStrip'
 import { StorefrontPromoStrip } from '../components/storefront/StorefrontPromoStrip'
 import type { ShopOutletContext } from '../types'
 import { resolveMediaUrl } from '../config'
@@ -9,6 +11,7 @@ import { formatPrice } from '../utils/formatPrice'
 import { productCategoryLabelAr } from '../utils/productCategoryLabel'
 import { productGalleryUrls } from '../utils/productGallery'
 import { isProductOutOfStock, maxOrderableQty } from '../utils/stock'
+import { useSEO } from '../hooks/useSEO'
 
 function StarsRow({ filled = 5 }: { filled?: number }) {
   return (
@@ -177,6 +180,13 @@ export function ProductDetailPage() {
     [products, productId],
   )
 
+  useSEO({
+    siteSettings,
+    productName: product?.name,
+    description: product?.description ? product.description.slice(0, 320) : undefined,
+    ogImage: product?.image,
+  })
+
   const gallery = useMemo(
     () => (product ? productGalleryUrls(product).map(resolveMediaUrl) : []),
     [product],
@@ -213,6 +223,9 @@ export function ProductDetailPage() {
 
   const ui = siteSettings.uiProduct
   const c = ui.copy
+
+  const shareUrl = `${window.location.origin}/product/${encodeURIComponent(product.id)}`
+  const shareSummary = `${product.name} — ${formatPrice(product.price)}`
   const shipBullets = c.accordionShipBullets
     .split('\n')
     .map((l) => l.trim())
@@ -235,7 +248,7 @@ export function ProductDetailPage() {
         <>
           <ProductImageGallery
             key={productId}
-            gallery={gallery.length ? gallery : [product.image]}
+            gallery={gallery}
             productName={product.name}
           />
           <StorefrontPromoStrip slots={siteSettings.promoSlots} placement="product_after_gallery" />
@@ -259,6 +272,7 @@ export function ProductDetailPage() {
             <span className="pd-price-was">{formatPrice(compare)}</span>
           ) : null}
         </div>
+        <ProductShareRow title={product.name} summary={shareSummary} url={shareUrl} />
       </section>
 
       {showInspired && ui.showInspiredBlock ? (
@@ -468,6 +482,8 @@ export function ProductDetailPage() {
           </div>
         </section>
       ) : null}
+
+      <SimilarProductsStrip current={product} products={products} />
 
       {ui.showSiteFooter ? <SiteFooter settings={siteSettings} /> : null}
 

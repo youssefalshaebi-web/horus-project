@@ -1,57 +1,58 @@
 import { getDefaultUiSettings } from './storefrontUiDefaults.mjs'
 import { getDefaultSiteTheme } from './themeDefaults.mjs'
+import { DEFAULT_PRODUCT_PRIMARY_IMAGE } from './productDefaults.mjs'
 
 /** أقسام الصفحة الرئيسية — تُدار من لوحة التحكم */
 export function getDefaultHomeSections() {
   return [
     {
-      id: 'womens',
-      label: 'عطور نسائية',
+      id: 'news',
+      label: 'الأخبار',
       tileImage: '',
       tileEmoji: '',
-      sectionTitle: 'عطور نسائية',
+      sectionTitle: 'الأخبار',
       sectionIntro: '',
       bannerImage: '',
-      subtitleLinkLabel: 'اطلع على جميع العطور',
-      subtitleLinkHash: 'catalog',
-      sectionType: 'category',
-      categoryId: 'womens',
-      visible: true,
+      subtitleLinkLabel: '',
+      subtitleLinkHash: '',
+      sectionType: 'news',
+      categoryId: '',
+      visible: false,
       showInTiles: true,
       sortOrder: 0,
       emptyHint: '',
     },
     {
-      id: 'mens',
-      label: 'عطور رجالية',
+      id: 'gifts',
+      label: 'مجموعات الهدايا',
       tileImage: '',
       tileEmoji: '',
-      sectionTitle: 'عطور رجالية',
+      sectionTitle: 'مجموعات الهدايا',
       sectionIntro: '',
       bannerImage: '',
-      subtitleLinkLabel: 'اطلع على جميع العطور',
-      subtitleLinkHash: 'catalog',
+      subtitleLinkLabel: 'عرض الكل',
+      subtitleLinkHash: 'catalog-gifts',
       sectionType: 'category',
-      categoryId: 'mens',
-      visible: true,
+      categoryId: 'gifts',
+      visible: false,
       showInTiles: true,
       sortOrder: 1,
-      emptyHint: '',
+      emptyHint: 'أضف منتجات بفئة gifts من لوحة التحكم.',
     },
     {
-      id: 'offers',
-      label: 'تخفيضات',
+      id: 'bestsellers',
+      label: 'الأكثر مبيعاً',
       tileImage: '',
-      tileEmoji: '🔥',
-      sectionTitle: 'تخفيضات',
+      tileEmoji: '',
+      sectionTitle: 'الأكثر مبيعاً والعروض',
       sectionIntro: '',
       bannerImage: '',
-      subtitleLinkLabel: 'جميع المنتجات',
-      subtitleLinkHash: 'catalog',
+      subtitleLinkLabel: 'جميع العروض',
+      subtitleLinkHash: 'catalog-sale',
       sectionType: 'sale',
       categoryId: '',
       visible: false,
-      showInTiles: false,
+      showInTiles: true,
       sortOrder: 2,
       emptyHint: 'لا توجد عروض حالياً — تابعنا قريباً.',
     },
@@ -71,6 +72,74 @@ export function getDefaultHomeSections() {
       showInTiles: true,
       sortOrder: 3,
       emptyHint: '',
+    },
+    {
+      id: 'low-price',
+      label: 'السعر المنخفض',
+      tileImage: '',
+      tileEmoji: '',
+      sectionTitle: 'السعر المنخفض',
+      sectionIntro: '',
+      bannerImage: '',
+      subtitleLinkLabel: '',
+      subtitleLinkHash: '',
+      sectionType: 'lowprice',
+      categoryId: '',
+      visible: false,
+      showInTiles: true,
+      sortOrder: 4,
+      emptyHint: '',
+    },
+    {
+      id: 'womens',
+      label: 'عطور نسائية',
+      tileImage: '',
+      tileEmoji: '',
+      sectionTitle: 'عطور نسائية',
+      sectionIntro: '',
+      bannerImage: '',
+      subtitleLinkLabel: 'اطلع على جميع العطور',
+      subtitleLinkHash: 'catalog-womens',
+      sectionType: 'category',
+      categoryId: 'womens',
+      visible: true,
+      showInTiles: false,
+      sortOrder: 10,
+      emptyHint: '',
+    },
+    {
+      id: 'mens',
+      label: 'عطور رجالية',
+      tileImage: '',
+      tileEmoji: '',
+      sectionTitle: 'عطور رجالية',
+      sectionIntro: '',
+      bannerImage: '',
+      subtitleLinkLabel: 'اطلع على جميع العطور',
+      subtitleLinkHash: 'catalog-mens',
+      sectionType: 'category',
+      categoryId: 'mens',
+      visible: true,
+      showInTiles: false,
+      sortOrder: 11,
+      emptyHint: '',
+    },
+    {
+      id: 'offers',
+      label: 'تخفيضات',
+      tileImage: '',
+      tileEmoji: '',
+      sectionTitle: 'تخفيضات',
+      sectionIntro: '',
+      bannerImage: '',
+      subtitleLinkLabel: 'جميع المنتجات',
+      subtitleLinkHash: 'catalog',
+      sectionType: 'sale',
+      categoryId: '',
+      visible: false,
+      showInTiles: false,
+      sortOrder: 12,
+      emptyHint: 'لا توجد عروض حالياً — تابعنا قريباً.',
     },
   ]
 }
@@ -144,6 +213,41 @@ export function getDefaultSettings() {
     preFooterNewsletterButtonLabel: 'اشتراك',
     footerNavGroups: getDefaultFooterNavGroups(),
     siteTheme: getDefaultSiteTheme(),
+    homeVideo: {
+      enabled: true,
+      url: '/home-bottom-loop.mp4',
+      posterUrl: '',
+    },
+    heroBanner: {
+      enabled: false,
+      slides: [],
+    },
+    aboutPage: {
+      enabled: false,
+      pageTitle: 'عن المتجر',
+      heroImageUrl: '',
+      body: '',
+      section2Title: '',
+      section2Body: '',
+      section2ImageUrl: '',
+    },
+    siteSeo: {
+      defaultTitle: 'HORUS parfum',
+      titleTemplate: '{name} | HORUS parfum',
+      defaultDescription:
+        'عطور مختارة بعناية، جودة عالية، وإتمام الطلب مع تتبع ودعم عبر واتساب.',
+      defaultKeywords: 'عطور، متجر عطور، HORUS',
+      ogImageUrl: '',
+    },
+    faviconUrl: '',
+    siteMetaDescription:
+      'عطور مختارة بعناية، جودة عالية، وإتمام الطلب مع تتبع ودعم عبر واتساب.',
+    socialInstagram: '',
+    socialTiktok: '',
+    socialSnapchat: '',
+    socialTwitter: '',
+    whatsappPhoneE164Secondary: '',
+    whatsappWelcomeMessage: '',
     ...getDefaultUiSettings(),
   }
 }
@@ -161,12 +265,7 @@ export function getBaseProducts() {
       inspiredNote: 'ملاحظات شرقية دافئة بإحساس فاخر',
       inspiredImage:
         'https://images.unsplash.com/photo-1595425970377-c9703cf48b6d?w=200&q=80',
-      image:
-        'https://images.unsplash.com/photo-1541643600914-78b084683601?w=600&q=80',
-      images: [
-        'https://images.unsplash.com/photo-1615634260167-c8cdede054de?w=600&q=80',
-        'https://images.unsplash.com/photo-1587017539500-4bccb56316af?w=600&q=80',
-      ],
+      image: DEFAULT_PRODUCT_PRIMARY_IMAGE,
     },
     {
       id: 'rose-amber',
@@ -178,8 +277,7 @@ export function getBaseProducts() {
       inspiredNote: 'ورد ناعم مع لمسة عنبر كلاسيكية',
       inspiredImage:
         'https://images.unsplash.com/photo-1587017539500-4bccb56316af?w=200&q=80',
-      image:
-        'https://images.unsplash.com/photo-1595425970377-c9703cf48b6d?w=600&q=80',
+      image: DEFAULT_PRODUCT_PRIMARY_IMAGE,
     },
     {
       id: 'velvet-iris',
@@ -190,8 +288,7 @@ export function getBaseProducts() {
       category: 'womens',
       inspiredNote: 'بودرة أنيقة مع بخور خفيف',
       inspiredImage: null,
-      image:
-        'https://images.unsplash.com/photo-1587017539500-4bccb56316af?w=600&q=80',
+      image: DEFAULT_PRODUCT_PRIMARY_IMAGE,
     },
     {
       id: 'citrus-veil',
@@ -203,8 +300,7 @@ export function getBaseProducts() {
       inspiredNote: 'انتعاش حمضيات مع خشب نظيف',
       inspiredImage:
         'https://images.unsplash.com/photo-1523293182080-32113a5f0cb3?w=200&q=80',
-      image:
-        'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=600&q=80',
+      image: DEFAULT_PRODUCT_PRIMARY_IMAGE,
     },
     {
       id: 'sandal-musk',
@@ -215,8 +311,7 @@ export function getBaseProducts() {
       category: 'mens',
       inspiredNote: 'دفء صندل مع مسك نظيف',
       inspiredImage: null,
-      image:
-        'https://images.unsplash.com/photo-1615634260167-c8cdede054de?w=600&q=80',
+      image: DEFAULT_PRODUCT_PRIMARY_IMAGE,
     },
     {
       id: 'ocean-sage',
@@ -227,8 +322,7 @@ export function getBaseProducts() {
       category: 'mens',
       inspiredNote: 'إحساس بحري مع أعشاب معطرة',
       inspiredImage: null,
-      image:
-        'https://images.unsplash.com/photo-1523293182080-32113a5f0cb3?w=600&q=80',
+      image: DEFAULT_PRODUCT_PRIMARY_IMAGE,
     },
   ]
 }
@@ -251,8 +345,7 @@ export function getDemoProducts() {
       inspiredNote: 'إطلالة مسائية ناعمة',
       inspiredImage:
         'https://images.unsplash.com/photo-1590736969955-71cc94901144?w=200&q=80',
-      image:
-        'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=600&q=80',
+      image: DEFAULT_PRODUCT_PRIMARY_IMAGE,
     },
     {
       id: 'demo-horus-silk-peony',
@@ -263,8 +356,7 @@ export function getDemoProducts() {
       category: 'womens',
       inspiredNote: 'زهور ناعمة للنهار',
       inspiredImage: null,
-      image:
-        'https://images.unsplash.com/photo-1541643600914-78b084683601?w=600&q=80',
+      image: DEFAULT_PRODUCT_PRIMARY_IMAGE,
     },
     {
       id: 'demo-horus-amber-dusk',
@@ -276,8 +368,7 @@ export function getDemoProducts() {
       inspiredNote: 'دفء مسائي مريح',
       inspiredImage:
         'https://images.unsplash.com/photo-1615634260167-c8cdede054de?w=200&q=80',
-      image:
-        'https://images.unsplash.com/photo-1595425970377-c9703cf48b6d?w=600&q=80',
+      image: DEFAULT_PRODUCT_PRIMARY_IMAGE,
     },
     {
       id: 'demo-horus-noir-leather',
@@ -288,8 +379,7 @@ export function getDemoProducts() {
       category: 'mens',
       inspiredNote: 'حضور قوي وأنيق',
       inspiredImage: null,
-      image:
-        'https://images.unsplash.com/photo-1523293182080-32113a5f0cb3?w=600&q=80',
+      image: DEFAULT_PRODUCT_PRIMARY_IMAGE,
     },
     {
       id: 'demo-horus-green-vetiver',
@@ -301,8 +391,7 @@ export function getDemoProducts() {
       inspiredNote: 'انتعاش ترابي نظيف',
       inspiredImage:
         'https://images.unsplash.com/photo-1587017539500-4bccb56316af?w=200&q=80',
-      image:
-        'https://images.unsplash.com/photo-1615634260167-c8cdede054de?w=600&q=80',
+      image: DEFAULT_PRODUCT_PRIMARY_IMAGE,
     },
     {
       id: 'demo-horus-coastal-wood',
@@ -313,8 +402,7 @@ export function getDemoProducts() {
       category: 'mens',
       inspiredNote: 'نسيم بحر خفيف',
       inspiredImage: null,
-      image:
-        'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=600&q=80',
+      image: DEFAULT_PRODUCT_PRIMARY_IMAGE,
     },
     {
       id: 'demo-horus-spiced-oud',
@@ -326,8 +414,7 @@ export function getDemoProducts() {
       inspiredNote: 'عرض تجريبي — قسم العروض',
       inspiredImage:
         'https://images.unsplash.com/photo-1590736969955-71cc94901144?w=200&q=80',
-      image:
-        'https://images.unsplash.com/photo-1541643600914-78b084683601?w=600&q=80',
+      image: DEFAULT_PRODUCT_PRIMARY_IMAGE,
     },
     {
       id: 'demo-horus-rose-oud-mini',
@@ -338,8 +425,7 @@ export function getDemoProducts() {
       category: 'offers',
       inspiredNote: 'مناسب كهدية تجريبية',
       inspiredImage: null,
-      image:
-        'https://images.unsplash.com/photo-1587017539500-4bccb56316af?w=600&q=80',
+      image: DEFAULT_PRODUCT_PRIMARY_IMAGE,
     },
   ]
 }
@@ -349,6 +435,7 @@ export function getDefaultStore() {
     settings: getDefaultSettings(),
     products: [...getBaseProducts(), ...getDemoProducts()],
     orders: [],
+    news: [],
     _internal: {
       demoProductsSeeded: true,
       homeCatalogLayout: true,

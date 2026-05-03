@@ -12,9 +12,22 @@ export type Product = {
   inspiredImage?: string | null
   /** null أو غير مُعرّف = لا حد أقصى (لا يُخصم من المخزون) */
   stockQuantity?: number | null
+  /** وسوم للتصفية السريعة (مثل: مساء، ثبات، هدايا) — حرف صغيرة */
+  tags?: string[] | null
 }
 
-export type HomeSectionType = 'category' | 'sale' | 'all'
+export type NewsArticle = {
+  id: string
+  title: string
+  body: string
+  createdAt: string
+  visible: boolean
+}
+
+/** خبر كما يظهر للزوار (بدون حقل الظهور) */
+export type PublicNewsArticle = Pick<NewsArticle, 'id' | 'title' | 'body' | 'createdAt'>
+
+export type HomeSectionType = 'category' | 'sale' | 'all' | 'news' | 'lowprice'
 
 export type HomeSectionConfig = {
   id: string
@@ -210,6 +223,49 @@ export type SiteTheme = {
   announcementBg: string
 }
 
+export type HomeVideoSettings = {
+  enabled: boolean
+  url: string
+  posterUrl?: string
+}
+
+/** شريحة واحدة في بانر الرئيسية (سلايدر) */
+export type HeroSlide = {
+  id: string
+  imageUrl: string
+  title: string
+  subtitle: string
+  ctaLabel: string
+  /** مسار داخلي، تجزئة (#catalog)، أو رابط مطلق */
+  ctaTo: string
+  /** لون خلفة احتياطي عند عدم وجود صورة */
+  fallbackBg: string
+}
+
+export type HeroBannerSettings = {
+  enabled: boolean
+  slides: HeroSlide[]
+}
+
+export type AboutPageSettings = {
+  enabled: boolean
+  pageTitle: string
+  heroImageUrl: string
+  body: string
+  section2Title: string
+  section2Body: string
+  section2ImageUrl: string
+}
+
+export type SiteSeoSettings = {
+  defaultTitle: string
+  /** استخدم {name} أو {اسم المنتج} لاسم المنتج في صفحة التفاصيل */
+  titleTemplate: string
+  defaultDescription: string
+  defaultKeywords: string
+  ogImageUrl: string
+}
+
 export type PublicSiteSettings = {
   storeName: string
   announcementBar: string
@@ -252,6 +308,26 @@ export type PublicSiteSettings = {
   promoSlots: StorefrontPromoSlot[]
   /** ألوان الموقع (خلفيات، نص، أزرار، شريط الإعلان، …) */
   siteTheme: SiteTheme
+  /** فيديو أسفل الرئيسية (صامت، متكرر) */
+  homeVideo: HomeVideoSettings
+  /** بانر / سلايدر أعلى الرئيسية */
+  heroBanner: HeroBannerSettings
+  /** صفحة «عن المتجر» */
+  aboutPage: AboutPageSettings
+  /** إعدادات ظهور الموقع في محركات البحث والشبكات */
+  siteSeo: SiteSeoSettings
+
+  faviconUrl: string
+  /** وصف عام للموقع (SEO) — يُدمج مع الوصف الافتراضي في وسم meta */
+  siteMetaDescription: string
+  socialInstagram: string
+  socialTiktok: string
+  socialSnapchat: string
+  socialTwitter: string
+  /** واتساب احتياطي (اختياري) */
+  whatsappPhoneE164Secondary: string
+  /** نص يُمرَّر عند فتح واتساب من زر الموقع */
+  whatsappWelcomeMessage: string
 }
 
 export type CartLine = {

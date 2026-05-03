@@ -9,6 +9,7 @@ type Props = {
   onCartPreview: () => void
   onCheckout: () => void
   onTrack: () => void
+  onAbout?: () => void
 }
 
 function IconCartBag() {
@@ -63,6 +64,7 @@ export function NavDrawer({
   onCartPreview,
   onCheckout,
   onTrack,
+  onAbout,
 }: Props) {
   useEffect(() => {
     if (!open) return
@@ -111,6 +113,13 @@ export function NavDrawer({
                 الرئيسية
               </button>
             </li>
+            {onAbout ? (
+              <li>
+                <button type="button" className="nav-menu-drawer-link" onClick={onAbout}>
+                  عن المتجر
+                </button>
+              </li>
+            ) : null}
             <li>
               <button type="button" className="nav-menu-drawer-link nav-menu-drawer-link--row" onClick={onOpenCart}>
                 <span className="nav-menu-drawer-icon" aria-hidden>

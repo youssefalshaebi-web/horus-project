@@ -13,11 +13,15 @@ import {
   sanitizeFooterNavGroups,
   sanitizeHomeFeatures,
   sanitizeHomeSections,
+  sanitizeHeroBanner,
+  sanitizeAboutPage,
+  sanitizeSiteSeo,
   sanitizeSiteTheme,
   sanitizeUiPatch,
 } from './settingsSanitize.mjs'
 import { getDefaultUiSettings } from './storefrontUiDefaults.mjs'
 import { getDefaultSiteTheme } from './themeDefaults.mjs'
+import { DEFAULT_PRODUCT_PRIMARY_IMAGE } from './productDefaults.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.join(__dirname, '..')
@@ -51,6 +55,28 @@ const upload = multer({
   },
 })
 
+const uploadVideo = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => {
+      ensureUploadDir()
+      cb(null, UPLOAD_DIR)
+    },
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname || '').toLowerCase()
+      const safe = ['.mp4', '.webm'].includes(ext) ? ext : '.mp4'
+      cb(null, `${crypto.randomUUID()}${safe}`)
+    },
+  }),
+  limits: { fileSize: 100 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const okMime = file.mimetype === 'video/mp4' || file.mimetype === 'video/webm'
+    const name = String(file.originalname || '').toLowerCase()
+    const okExt = name.endsWith('.mp4') || name.endsWith('.webm')
+    if (okMime || okExt) cb(null, true)
+    else cb(new Error('يُقبل فقط mp4 أو webm'))
+  },
+})
+
 app.use('/uploads', express.static(UPLOAD_DIR))
 
 function randomPublicCode() {
@@ -77,6 +103,23 @@ function normalizeProductImagesExtra(input) {
     if (urls.length >= 24) break
   }
   return urls.length ? urls : null
+}
+
+function normalizeProductTags(input) {
+  if (input === undefined) return undefined
+  if (input === null) return null
+  if (Array.isArray(input)) {
+    const t = [...new Set(input.map((x) => String(x).trim().toLowerCase()).filter(Boolean))].slice(0, 16)
+    return t.length ? t : null
+  }
+  if (typeof input === 'string') {
+    const t = [...new Set(input.split(/[\n,،]/).map((s) => s.trim().toLowerCase()).filter(Boolean))].slice(
+      0,
+      16,
+    )
+    return t.length ? t : null
+  }
+  return null
 }
 
 function uniquePublicCode(store) {
@@ -151,6 +194,28 @@ function publicSettings(store) {
       ...getDefaultSiteTheme(),
       ...(typeof s.siteTheme === 'object' && s.siteTheme ? s.siteTheme : {}),
     },
+    homeVideo: (() => {
+      const du = { enabled: true, url: '/home-bottom-loop.mp4', posterUrl: '' }
+      const hv = typeof s.homeVideo === 'object' && s.homeVideo ? s.homeVideo : {}
+      return {
+        enabled: hv.enabled !== false,
+        url: typeof hv.url === 'string' ? hv.url : du.url,
+        posterUrl: typeof hv.posterUrl === 'string' ? hv.posterUrl : '',
+      }
+    })(),
+    heroBanner: sanitizeHeroBanner(s.heroBanner),
+    aboutPage: sanitizeAboutPage(s.aboutPage),
+    siteSeo: sanitizeSiteSeo(s.siteSeo),
+    faviconUrl: typeof s.faviconUrl === 'string' ? s.faviconUrl : '',
+    siteMetaDescription: typeof s.siteMetaDescription === 'string' ? s.siteMetaDescription : '',
+    socialInstagram: typeof s.socialInstagram === 'string' ? s.socialInstagram : '',
+    socialTiktok: typeof s.socialTiktok === 'string' ? s.socialTiktok : '',
+    socialSnapchat: typeof s.socialSnapchat === 'string' ? s.socialSnapchat : '',
+    socialTwitter: typeof s.socialTwitter === 'string' ? s.socialTwitter : '',
+    whatsappPhoneE164Secondary:
+      typeof s.whatsappPhoneE164Secondary === 'string' ? s.whatsappPhoneE164Secondary.replace(/\D/g, '') : '',
+    whatsappWelcomeMessage:
+      typeof s.whatsappWelcomeMessage === 'string' ? s.whatsappWelcomeMessage : '',
   }
 }
 
@@ -162,6 +227,21 @@ app.get('/api/settings', (_req, res) => {
 app.get('/api/products', (_req, res) => {
   const store = readStore()
   res.json({ products: store.products })
+})
+
+/** أخبار ظاهرة للزوار — الأحدث أولاً */
+app.get('/api/news', (_req, res) => {
+  const store = readStore()
+  const list = (store.news || [])
+    .filter((n) => n && n.visible === true)
+    .map((n) => ({
+      id: n.id,
+      title: n.title,
+      body: n.body,
+      createdAt: n.createdAt,
+    }))
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0))
+  res.json({ news: list })
 })
 
 /** تفاصيل طلب للعميل برقم العرض العام */
@@ -454,10 +534,13 @@ app.post('/api/admin/products', adminAuth, (req, res) => {
     inspiredNote,
     inspiredImage,
     stockQuantity,
-    image: String(p.image || '').trim() || 'https://placehold.co/600x750/1a1816/c9a227?text=Perfume',
+    image: String(p.image || '').trim() || DEFAULT_PRODUCT_PRIMARY_IMAGE,
   }
   if (Object.prototype.hasOwnProperty.call(p, 'images')) {
     product.images = normalizeProductImagesExtra(p.images)
+  }
+  if (Object.prototype.hasOwnProperty.call(p, 'tags')) {
+    product.tags = normalizeProductTags(p.tags)
   }
 
   let created = null
@@ -499,7 +582,10 @@ app.patch('/api/admin/products/:id', adminAuth, (req, res) => {
         return
       }
     }
-    if (p.image !== undefined) next.image = String(p.image).trim()
+    if (p.image !== undefined) {
+      const trimmed = String(p.image).trim()
+      next.image = trimmed || DEFAULT_PRODUCT_PRIMARY_IMAGE
+    }
     if (p.category !== undefined) {
       const c = String(p.category || 'all')
         .trim()
@@ -531,6 +617,9 @@ app.patch('/api/admin/products/:id', adminAuth, (req, res) => {
     if (p.images !== undefined) {
       next.images = normalizeProductImagesExtra(p.images)
     }
+    if (p.tags !== undefined) {
+      next.tags = normalizeProductTags(p.tags)
+    }
     s.products[idx] = next
     updated = next
   })
@@ -554,6 +643,117 @@ app.delete('/api/admin/products/:id', adminAuth, (req, res) => {
     return res.status(404).json({ error: 'المنتج غير موجود' })
   }
   res.json({ ok: true })
+})
+
+app.get('/api/admin/news', adminAuth, (_req, res) => {
+  const store = readStore()
+  const list = [...(store.news || [])].sort((a, b) =>
+    a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0,
+  )
+  res.json({ news: list })
+})
+
+app.post('/api/admin/news', adminAuth, (req, res) => {
+  const { title, body, visible } = req.body || {}
+  const t = String(title ?? '').trim()
+  if (!t) {
+    return res.status(400).json({ error: 'العنوان مطلوب' })
+  }
+  const b = String(body ?? '')
+  const vis = visible !== undefined ? Boolean(visible) : true
+  const item = {
+    id: crypto.randomUUID(),
+    title: t,
+    body: b,
+    createdAt: new Date().toISOString(),
+    visible: vis,
+  }
+  mutateStore((s) => {
+    if (!Array.isArray(s.news)) s.news = []
+    s.news.unshift(item)
+  })
+  res.status(201).json({ newsItem: item })
+})
+
+app.patch('/api/admin/news/:id', adminAuth, (req, res) => {
+  const { id } = req.params
+  const { title, body, visible } = req.body || {}
+  if (title !== undefined && !String(title).trim()) {
+    return res.status(400).json({ error: 'العنوان لا يمكن أن يكون فارغاً' })
+  }
+  let updated = null
+  mutateStore((s) => {
+    if (!Array.isArray(s.news)) s.news = []
+    const idx = s.news.findIndex((x) => x.id === id)
+    if (idx < 0) return
+    const cur = s.news[idx]
+    const next = { ...cur }
+    if (title !== undefined) {
+      next.title = String(title).trim()
+    }
+    if (body !== undefined) {
+      next.body = String(body)
+    }
+    if (visible !== undefined) {
+      next.visible = Boolean(visible)
+    }
+    s.news[idx] = next
+    updated = next
+  })
+  if (!updated) {
+    return res.status(404).json({ error: 'الخبر غير موجود' })
+  }
+  res.json({ newsItem: updated })
+})
+
+app.delete('/api/admin/news/:id', adminAuth, (req, res) => {
+  const { id } = req.params
+  let ok = false
+  mutateStore((s) => {
+    if (!Array.isArray(s.news)) s.news = []
+    const n = s.news.filter((x) => x.id !== id)
+    if (n.length !== s.news.length) {
+      s.news = n
+      ok = true
+    }
+  })
+  if (!ok) {
+    return res.status(404).json({ error: 'الخبر غير موجود' })
+  }
+  res.json({ ok: true })
+})
+
+app.post('/api/admin/upload/video', adminAuth, (req, res) => {
+  uploadVideo.single('file')(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ error: err.message || 'فشل الرفع' })
+    }
+    if (!req.file) {
+      return res.status(400).json({ error: 'لم يُرسل ملف' })
+    }
+    res.json({ url: `/uploads/${req.file.filename}` })
+  })
+})
+
+app.patch('/api/admin/settings/video', adminAuth, (req, res) => {
+  const { enabled, url, posterUrl } = req.body || {}
+  const du = { enabled: true, url: '/home-bottom-loop.mp4', posterUrl: '' }
+  mutateStore((s) => {
+    const cur =
+      s.settings.homeVideo && typeof s.settings.homeVideo === 'object'
+        ? s.settings.homeVideo
+        : { ...du }
+    const next = {
+      enabled: cur.enabled !== false,
+      url: typeof cur.url === 'string' ? cur.url : du.url,
+      posterUrl: typeof cur.posterUrl === 'string' ? cur.posterUrl : '',
+    }
+    if (enabled !== undefined) next.enabled = Boolean(enabled)
+    if (url !== undefined) next.url = String(url ?? '').trim()
+    if (posterUrl !== undefined) next.posterUrl = String(posterUrl ?? '').trim()
+    s.settings.homeVideo = next
+  })
+  res.json(publicSettings(readStore()))
 })
 
 app.get('/api/admin/settings', adminAuth, (_req, res) => {
@@ -588,6 +788,33 @@ app.patch('/api/admin/settings', adminAuth, (req, res) => {
       if (b[key] !== undefined) {
         s.settings[key] = String(b[key] ?? '').trim()
       }
+    }
+    const moreTextFields = [
+      'faviconUrl',
+      'siteMetaDescription',
+      'socialInstagram',
+      'socialTiktok',
+      'socialSnapchat',
+      'socialTwitter',
+      'whatsappWelcomeMessage',
+    ]
+    for (const key of moreTextFields) {
+      if (b[key] !== undefined) {
+        s.settings[key] = String(b[key] ?? '').trim()
+      }
+    }
+    if (b.whatsappPhoneE164Secondary !== undefined) {
+      const d = String(b.whatsappPhoneE164Secondary).replace(/\D/g, '')
+      s.settings.whatsappPhoneE164Secondary = d.length >= 8 ? d : ''
+    }
+    if (b.heroBanner !== undefined) {
+      s.settings.heroBanner = sanitizeHeroBanner(b.heroBanner)
+    }
+    if (b.aboutPage !== undefined) {
+      s.settings.aboutPage = sanitizeAboutPage(b.aboutPage)
+    }
+    if (b.siteSeo !== undefined) {
+      s.settings.siteSeo = sanitizeSiteSeo(b.siteSeo)
     }
     if (b.homeSections !== undefined) {
       s.settings.homeSections = sanitizeHomeSections(b.homeSections)

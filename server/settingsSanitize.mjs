@@ -6,7 +6,7 @@ import {
 import { getDefaultUiSettings } from './storefrontUiDefaults.mjs'
 import { getDefaultSiteTheme } from './themeDefaults.mjs'
 
-const SECTION_TYPES = new Set(['category', 'sale', 'all'])
+const SECTION_TYPES = new Set(['category', 'sale', 'all', 'news', 'lowprice'])
 const ICON_KEYS = new Set(['package', 'clock', 'support', 'truck', 'sparkles'])
 
 function slugId(s) {
@@ -286,6 +286,82 @@ export function sanitizeUiPatch(body) {
   if (body.uiTrack !== undefined) out.uiTrack = sanitizeUiTrack(body.uiTrack)
   if (body.promoSlots !== undefined) out.promoSlots = sanitizePromoSlots(body.promoSlots)
   return out
+}
+
+function slideId(raw) {
+  const t = String(raw || '').trim()
+  if (t) return t
+  return `slide-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+}
+
+/** @param {unknown} input */
+export function sanitizeHeroBanner(input) {
+  const du = { enabled: false, slides: [] }
+  if (!input || typeof input !== 'object') return du
+  const enabled = input.enabled === true
+  const slidesIn = Array.isArray(input.slides) ? input.slides : []
+  const slides = []
+  for (const raw of slidesIn) {
+    if (!raw || typeof raw !== 'object') continue
+    let fb = String(raw.fallbackBg ?? '').trim()
+    if (!/^#[0-9A-Fa-f]{6}$/.test(fb)) {
+      const h = fb.replace(/^#/, '')
+      if (/^[0-9A-Fa-f]{6}$/.test(h)) fb = `#${h.toLowerCase()}`
+      else fb = '#1a1816'
+    } else fb = fb.toLowerCase()
+    slides.push({
+      id: slideId(raw.id),
+      imageUrl: String(raw.imageUrl ?? '').trim(),
+      title: String(raw.title ?? '').trim(),
+      subtitle: String(raw.subtitle ?? '').trim(),
+      ctaLabel: String(raw.ctaLabel ?? '').trim(),
+      ctaTo: String(raw.ctaTo ?? '').trim(),
+      fallbackBg: fb,
+    })
+  }
+  return { enabled, slides }
+}
+
+/** @param {unknown} input */
+export function sanitizeAboutPage(input) {
+  const du = {
+    enabled: false,
+    pageTitle: 'عن المتجر',
+    heroImageUrl: '',
+    body: '',
+    section2Title: '',
+    section2Body: '',
+    section2ImageUrl: '',
+  }
+  if (!input || typeof input !== 'object') return { ...du }
+  return {
+    enabled: input.enabled === true,
+    pageTitle: String(input.pageTitle ?? du.pageTitle).trim() || du.pageTitle,
+    heroImageUrl: String(input.heroImageUrl ?? '').trim(),
+    body: String(input.body ?? '').trim(),
+    section2Title: String(input.section2Title ?? '').trim(),
+    section2Body: String(input.section2Body ?? '').trim(),
+    section2ImageUrl: String(input.section2ImageUrl ?? '').trim(),
+  }
+}
+
+/** @param {unknown} input */
+export function sanitizeSiteSeo(input) {
+  const du = {
+    defaultTitle: 'HORUS parfum',
+    titleTemplate: '{name} | HORUS parfum',
+    defaultDescription: '',
+    defaultKeywords: '',
+    ogImageUrl: '',
+  }
+  if (!input || typeof input !== 'object') return { ...du }
+  return {
+    defaultTitle: String(input.defaultTitle ?? du.defaultTitle).trim() || du.defaultTitle,
+    titleTemplate: String(input.titleTemplate ?? du.titleTemplate).trim() || du.titleTemplate,
+    defaultDescription: String(input.defaultDescription ?? '').trim(),
+    defaultKeywords: String(input.defaultKeywords ?? '').trim(),
+    ogImageUrl: String(input.ogImageUrl ?? '').trim(),
+  }
 }
 
 /** @param {unknown} input */

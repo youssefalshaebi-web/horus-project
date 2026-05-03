@@ -1,6 +1,7 @@
+import { Link } from 'react-router-dom'
 import { resolveMediaUrl } from '../../config'
 import type { HomeSectionConfig } from '../../types'
-import { tileHrefForSection } from '../../utils/homeNav'
+import { tileToForSection } from '../../utils/homeNav'
 
 type Props = {
   categoriesBlockTitle: string
@@ -19,9 +20,9 @@ export function CategoryTiles({ categoriesBlockTitle, sections }: Props) {
       </h2>
       <div className="category-grid">
         {tiles.map((t) => (
-          <a
+          <Link
             key={t.id}
-            href={tileHrefForSection(t)}
+            to={tileToForSection(t)}
             className={t.tileImage.trim() ? 'category-tile category-tile-image' : 'category-tile'}
             style={
               t.tileImage.trim()
@@ -35,7 +36,7 @@ export function CategoryTiles({ categoriesBlockTitle, sections }: Props) {
               {t.tileEmoji ? <span className="category-tile-emoji">{t.tileEmoji} </span> : null}
               {t.label}
             </span>
-          </a>
+          </Link>
         ))}
       </div>
     </section>

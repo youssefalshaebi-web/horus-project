@@ -5,8 +5,11 @@ import { defaultPublicSiteSettings } from '../../siteDefaults'
 import { applySiteThemeToDocument, DEFAULT_SITE_THEME, SITE_THEME_LABELS } from '../../siteThemeDefaults'
 import type {
   FooterNavGroup,
+  HeroBannerSettings,
+  HeroSlide,
   HomeFeatureConfig,
   HomeSectionConfig,
+  HomeVideoSettings,
   PublicSiteSettings,
   SiteTheme,
   StorefrontPromoKind,
@@ -15,8 +18,9 @@ import type {
   UiHome,
 } from '../../types'
 import { mergePublicSiteSettings } from '../../utils/siteSettingsMerge'
+import { AdminVideoSettings } from './AdminVideoSettings'
 
-type StorefrontEditorTab = 'content' | 'theme' | 'product' | 'cartflow' | 'promos'
+type StorefrontEditorTab = 'content' | 'theme' | 'product' | 'cartflow' | 'promos' | 'homevideo'
 
 const PROMO_PLACE_LABELS: { value: StorefrontPromoPlacement; label: string }[] = [
   { value: 'global_after_header', label: 'عالمي: أسفل الهيدر مباشرة' },
@@ -34,6 +38,8 @@ const SECTION_TYPE_OPTS: { value: HomeSectionConfig['sectionType']; label: strin
   { value: 'category', label: 'فئة (اربط المنتجات بـ categoryId)' },
   { value: 'sale', label: 'تخفيضات (سعر قبل التخفيض)' },
   { value: 'all', label: 'جميع المنتجات' },
+  { value: 'news', label: 'أخبار (بلاطة → صفحة الأخبار)' },
+  { value: 'lowprice', label: 'السعر المنخفض (بلاطة → ترتيب حسب السعر)' },
 ]
 
 const ICON_OPTS = [
@@ -71,6 +77,18 @@ function newFeature(): HomeFeatureConfig {
 
 function newFooterGroup(): FooterNavGroup {
   return { title: 'عنوان المجموعة', links: [{ label: 'رابط', href: '/' }] }
+}
+
+function newHeroSlide(): HeroSlide {
+  return {
+    id: typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `slide-${Date.now()}`,
+    imageUrl: '',
+    title: '',
+    subtitle: '',
+    ctaLabel: '',
+    ctaTo: '/',
+    fallbackBg: '#1a1816',
+  }
 }
 
 export function AdminStorefront() {
@@ -111,6 +129,10 @@ export function AdminStorefront() {
 
   function patchTheme<K extends keyof SiteTheme>(key: K, value: string) {
     setForm((s) => ({ ...s, siteTheme: { ...s.siteTheme, [key]: value } }))
+  }
+
+  function patchHomeVideo(partial: Partial<HomeVideoSettings>) {
+    setForm((s) => ({ ...s, homeVideo: { ...s.homeVideo, ...partial } }))
   }
 
   function updatePromo(index: number, partial: Partial<StorefrontPromoSlot>) {
@@ -249,6 +271,48 @@ export function AdminStorefront() {
     }))
   }
 
+  function patchHeroBanner(partial: Partial<HeroBannerSettings>) {
+    setForm((s) => ({ ...s, heroBanner: { ...s.heroBanner, ...partial } }))
+  }
+
+  function updateHeroSlide(index: number, partial: Partial<HeroSlide>) {
+    setForm((s) => {
+      const slides = [...s.heroBanner.slides]
+      const cur = slides[index]
+      if (!cur) return s
+      slides[index] = { ...cur, ...partial }
+      return { ...s, heroBanner: { ...s.heroBanner, slides } }
+    })
+  }
+
+  function moveHeroSlide(index: number, dir: -1 | 1) {
+    setForm((s) => {
+      const slides = [...s.heroBanner.slides]
+      const j = index + dir
+      if (j < 0 || j >= slides.length) return s
+      ;[slides[index], slides[j]] = [slides[j], slides[index]]
+      return { ...s, heroBanner: { ...s.heroBanner, slides } }
+    })
+  }
+
+  function addHeroSlide() {
+    setForm((s) => ({
+      ...s,
+      heroBanner: { ...s.heroBanner, slides: [...s.heroBanner.slides, newHeroSlide()] },
+    }))
+  }
+
+  function removeHeroSlide(index: number) {
+    if (!window.confirm('حذف هذه الشريحة؟')) return
+    setForm((s) => ({
+      ...s,
+      heroBanner: {
+        ...s.heroBanner,
+        slides: s.heroBanner.slides.filter((_, i) => i !== index),
+      },
+    }))
+  }
+
   async function handleSave(e: FormEvent) {
     e.preventDefault()
     setSaved(false)
@@ -282,6 +346,7 @@ export function AdminStorefront() {
           uiTrack: form.uiTrack,
           promoSlots: form.promoSlots,
           siteTheme: form.siteTheme,
+          heroBanner: form.heroBanner,
         }),
       })
       await load()
@@ -302,6 +367,7 @@ export function AdminStorefront() {
           [
             ['content', 'المحتوى والرئيسية'],
             ['theme', 'الألوان والمظهر'],
+            ['homevideo', 'فيديو الرئيسية'],
             ['product', 'صفحة المنتج'],
             ['cartflow', 'السلة والطلب'],
             ['promos', 'شرائط وبطاقات'],
@@ -364,10 +430,18 @@ export function AdminStorefront() {
         </>
       ) : null}
 
+      {storefrontTab === 'homevideo' ? (
+        <AdminVideoSettings
+          homeVideo={form.homeVideo}
+          onPatch={patchHomeVideo}
+          onSettingsMerged={(s) => setForm(mergePublicSiteSettings(s))}
+        />
+      ) : null}
+
       {storefrontTab === 'content' ? (
         <>
           <p className="checkout-lead">
-            تحكّم بشريط الإعلان، الهيرو، شعار الهيدر، بلاطات الفئات، أقسام المنتجات (بانر لكل قسم)،
+            تحكّم بشريط الإعلان، شعار الهيدر، بلاطات الفئات، أقسام المنتجات (بانر لكل قسم)،
             ومربعات «لماذا نحن». يمكنك لصق رابط صورة أو استخدام «رفع وتقطيع» من الكمبيوتر أو الهاتف.
           </p>
 
@@ -384,14 +458,10 @@ export function AdminStorefront() {
               />
               <span>شريط الإعلان العلوي</span>
             </label>
-            <label className="field admin-checkbox-field">
-              <input
-                type="checkbox"
-                checked={form.uiHome.showHero}
-                onChange={(e) => patchUiHome('showHero', e.target.checked)}
-              />
-              <span>قسم الهيرو (عنوان وصورة)</span>
-            </label>
+            <div className="admin-card admin-muted" style={{ gridColumn: '1 / -1', padding: '0.85rem 1rem' }}>
+              لافتة أعلى الصفحة الرئيسية (تحت البحث) ثابتة في التطبيق — صورة العبوة والنص المعروضان
+              للزبائن لا يُعدَّلان من لوحة التحكم.
+            </div>
             <label className="field admin-checkbox-field">
               <input
                 type="checkbox"
@@ -434,6 +504,111 @@ export function AdminStorefront() {
             </label>
           </div>
 
+          <h2 className="admin-subtitle">بانر الرئيسية (سلايدر)</h2>
+          <p className="admin-muted">
+            يظهر أعلى البلاطات في الرئيسية. أكثر من شريحة تُفعّل التنقّل التلقائي كل 5 ثوانٍ
+            والنقاط.
+          </p>
+          <div className="admin-card admin-grid-2">
+            <label className="field admin-checkbox-field">
+              <input
+                type="checkbox"
+                checked={form.heroBanner.enabled}
+                onChange={(e) => patchHeroBanner({ enabled: e.target.checked })}
+              />
+              <span>تفعيل بانر الرئيسية</span>
+            </label>
+          </div>
+          <div className="admin-section-list">
+            {form.heroBanner.slides.map((slide, index) => (
+              <div key={slide.id} className="admin-card admin-section-editor">
+                <div className="admin-section-editor-head">
+                  <strong>شريحة {index + 1}</strong>
+                  <div className="admin-section-editor-actions">
+                    <button
+                      type="button"
+                      className="link-btn"
+                      disabled={index === 0}
+                      onClick={() => moveHeroSlide(index, -1)}
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      className="link-btn"
+                      disabled={index === form.heroBanner.slides.length - 1}
+                      onClick={() => moveHeroSlide(index, 1)}
+                    >
+                      ↓
+                    </button>
+                    <button type="button" className="link-btn" onClick={() => removeHeroSlide(index)}>
+                      حذف
+                    </button>
+                  </div>
+                </div>
+                <AdminImageUploadField
+                  label="صورة الخلفية"
+                  value={slide.imageUrl}
+                  onChange={(url) => updateHeroSlide(index, { imageUrl: url })}
+                  aspect={16 / 9}
+                />
+                <label className="field">
+                  <span>العنوان الرئيسي</span>
+                  <input
+                    value={slide.title}
+                    onChange={(e) => updateHeroSlide(index, { title: e.target.value })}
+                  />
+                </label>
+                <label className="field">
+                  <span>العنوان الفرعي</span>
+                  <textarea
+                    rows={2}
+                    value={slide.subtitle}
+                    onChange={(e) => updateHeroSlide(index, { subtitle: e.target.value })}
+                  />
+                </label>
+                <div className="admin-grid-2">
+                  <label className="field">
+                    <span>نص الزر</span>
+                    <input
+                      value={slide.ctaLabel}
+                      onChange={(e) => updateHeroSlide(index, { ctaLabel: e.target.value })}
+                    />
+                  </label>
+                  <label className="field">
+                    <span>رابط الزر (مسار، #قسم، أو https)</span>
+                    <input
+                      dir="ltr"
+                      value={slide.ctaTo}
+                      onChange={(e) => updateHeroSlide(index, { ctaTo: e.target.value })}
+                      placeholder="/about أو #catalog-womens"
+                    />
+                  </label>
+                </div>
+                <label className="field admin-theme-color-row">
+                  <span>لون خلفية احتياطي</span>
+                  <div className="admin-theme-color-inputs">
+                    <input
+                      type="color"
+                      aria-label="لون الخلفية"
+                      value={/^#[0-9A-Fa-f]{6}$/.test(slide.fallbackBg) ? slide.fallbackBg : '#1a1816'}
+                      onChange={(e) => updateHeroSlide(index, { fallbackBg: e.target.value })}
+                    />
+                    <input
+                      type="text"
+                      dir="ltr"
+                      value={slide.fallbackBg}
+                      onChange={(e) => updateHeroSlide(index, { fallbackBg: e.target.value })}
+                    />
+                  </div>
+                </label>
+              </div>
+            ))}
+          </div>
+          <button type="button" className="btn btn-ghost" onClick={addHeroSlide}>
+            + إضافة شريحة
+          </button>
+
           <h2 className="admin-subtitle">الهيدر والإعلان</h2>
       <label className="field">
         <span>شريط الإعلان أعلى الموقع</span>
@@ -457,26 +632,11 @@ export function AdminStorefront() {
         />
       </label>
 
-      <h2 className="admin-subtitle">الهيرو (أعلى الصفحة)</h2>
-      <label className="field">
-        <span>عنوان الهيرو</span>
-        <input value={form.heroTitle} onChange={(e) => patch('heroTitle', e.target.value)} />
-      </label>
-      <label className="field">
-        <span>نص فرعي</span>
-        <textarea
-          rows={2}
-          value={form.heroSubtitle}
-          onChange={(e) => patch('heroSubtitle', e.target.value)}
-        />
-      </label>
-      <AdminImageUploadField
-        label="صورة الهيرو"
-        value={form.heroImage}
-        onChange={(url) => patch('heroImage', url)}
-        aspect={16 / 9}
-        hint="بانر عريض؛ رابط أو رفع وتقطيع."
-      />
+      <h2 className="admin-subtitle">لافتة أعلى الرئيسية</h2>
+      <p className="admin-muted admin-card" style={{ padding: '1rem' }}>
+        العنوان «عطور، تليق بك»، النص التعريفي، وصورة عبوة OMBRA تُعرض دائماً تحت شريط البحث؛ لا
+        تُخزَّن في إعدادات المتجر ولا يمكن تعديلها من هنا.
+      </p>
 
       <h2 className="admin-subtitle">بلاطات الفئات</h2>
       <label className="field">

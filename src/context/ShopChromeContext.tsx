@@ -14,8 +14,6 @@ type ShopChromeValue = {
   setSearchQuery: Dispatch<SetStateAction<string>>
   menuOpen: boolean
   setMenuOpen: Dispatch<SetStateAction<boolean>>
-  searchOpen: boolean
-  setSearchOpen: Dispatch<SetStateAction<boolean>>
 }
 
 const ShopChromeContext = createContext<ShopChromeValue | null>(null)
@@ -23,7 +21,6 @@ const ShopChromeContext = createContext<ShopChromeValue | null>(null)
 export function ShopChromeProvider({ children }: { children: ReactNode }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
-  const [searchOpen, setSearchOpen] = useState(false)
 
   const value = useMemo(
     () => ({
@@ -31,10 +28,8 @@ export function ShopChromeProvider({ children }: { children: ReactNode }) {
       setSearchQuery,
       menuOpen,
       setMenuOpen,
-      searchOpen,
-      setSearchOpen,
     }),
-    [searchQuery, menuOpen, searchOpen],
+    [searchQuery, menuOpen],
   )
 
   return (

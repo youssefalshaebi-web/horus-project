@@ -7,12 +7,33 @@ import { applySiteThemeToDocument } from '../siteThemeDefaults'
 import type { Product, PublicSiteSettings, ShopOutletContext } from '../types'
 import { mergePublicSiteSettings } from '../utils/siteSettingsMerge'
 
+function normalizeTags(raw: unknown): string[] | null {
+  if (raw == null) return null
+  if (Array.isArray(raw)) {
+    const t = raw
+      .map((x) => String(x).trim().toLowerCase())
+      .filter(Boolean)
+    const uniq = [...new Set(t)]
+    return uniq.length ? uniq.slice(0, 16) : null
+  }
+  if (typeof raw === 'string') {
+    const t = raw
+      .split(/[\n,،]/)
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean)
+    const uniq = [...new Set(t)]
+    return uniq.length ? uniq.slice(0, 16) : null
+  }
+  return null
+}
+
 function normalizeProduct(p: Product): Product {
   return {
     ...p,
     category: p.category || 'all',
     inspiredNote: p.inspiredNote ?? null,
     inspiredImage: p.inspiredImage ?? null,
+    tags: normalizeTags(p.tags),
     stockQuantity:
       p.stockQuantity === undefined || p.stockQuantity === null
         ? null

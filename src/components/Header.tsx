@@ -1,25 +1,54 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useCart } from '../context/CartContext'
 import { useShopChrome } from '../context/ShopChromeContext'
+import { SEARCH_SNAP_KEY } from '../utils/browseRestore'
 import { NavDrawer } from './NavDrawer'
-import { SearchDrawer } from './SearchDrawer'
-import { resolveMediaUrl } from '../config'
-import type { Product } from '../types'
-
-const LOGO_FALLBACK = '/horus-logo.png'
 
 type Props = {
-  products: Product[]
   onOpenCart: () => void
   itemCount: number
-  logoSrc: string
-  logoAlt: string
+  /** لوصف رابط الرئيسية لقارئ الشاشة (مثلاً اسم المتجر) */
+  homeAriaLabel: string
+  /** شعار الصورة — يُعرض بدلاً من الشعار النصي */
+  headerLogoSrc?: string
+  headerLogoAlt?: string
+  showAboutNav?: boolean
 }
 
-export function Header({ products, onOpenCart, itemCount, logoSrc, logoAlt }: Props) {
+export function Header({
+  onOpenCart,
+  itemCount,
+  homeAriaLabel,
+  headerLogoSrc,
+  headerLogoAlt,
+  showAboutNav,
+}: Props) {
   const location = useLocation()
   const navigate = useNavigate()
-  const { menuOpen, setMenuOpen, searchOpen, setSearchOpen } = useShopChrome()
+  const { menuOpen, setMenuOpen, searchQuery, setSearchQuery } = useShopChrome()
+  const { cartActivityGeneration } = useCart()
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const cartBtnRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(SEARCH_SNAP_KEY, searchQuery)
+    } catch {
+      /* ignore */
+    }
+  }, [searchQuery])
+
+  useEffect(() => {
+    if (cartActivityGeneration === 0) return
+    const el = cartBtnRef.current
+    if (!el) return
+    el.classList.remove('cart-trigger--pulse')
+    void el.offsetWidth
+    el.classList.add('cart-trigger--pulse')
+    const t = window.setTimeout(() => el.classList.remove('cart-trigger--pulse'), 700)
+    return () => window.clearTimeout(t)
+  }, [cartActivityGeneration])
 
   useEffect(() => {
     setMenuOpen(false)
@@ -54,6 +83,14 @@ export function Header({ products, onOpenCart, itemCount, logoSrc, logoAlt }: Pr
     navigate('/')
   }
 
+  function goAbout() {
+    closeMenu()
+    navigate('/about')
+  }
+
+  const logoSrc = headerLogoSrc?.trim()
+  const logoAltText = (headerLogoAlt || homeAriaLabel).trim() || 'HORUS parfum'
+
   return (
     <>
       <div className="header-wrap">
@@ -63,7 +100,6 @@ export function Header({ products, onOpenCart, itemCount, logoSrc, logoAlt }: Pr
               type="button"
               className="icon-round"
               onClick={() => {
-                setSearchOpen(false)
                 setMenuOpen((open) => !open)
               }}
               aria-expanded={menuOpen}
@@ -80,50 +116,28 @@ export function Header({ products, onOpenCart, itemCount, logoSrc, logoAlt }: Pr
           </div>
 
           <div className="header-brand-center">
-            <Link to="/" className="brand-lockup" onClick={closeMenu}>
-              <img
-                src={resolveMediaUrl(logoSrc.trim()) || LOGO_FALLBACK}
-                alt={logoAlt.trim() || 'Logo'}
-                className="brand-logo-img"
-                width={48}
-                height={48}
-              />
-              <div className="brand-type" dir="ltr">
-                <span className="brand-horus">HORUS</span>
-                <span className="brand-parfum">parfum</span>
-              </div>
+            <Link
+              to="/"
+              className="brand-lockup"
+              onClick={closeMenu}
+              aria-label={homeAriaLabel.trim() || 'HORUS parfum — الرئيسية'}
+            >
+              {logoSrc ? (
+                <img src={logoSrc} alt={logoAltText} className="header-logo-img" />
+              ) : (
+                <div className="brand-type" dir="ltr">
+                  <span className="brand-horus">HORUS</span>
+                  <span className="brand-parfum">parfum</span>
+                </div>
+              )}
             </Link>
           </div>
 
           <div className="header-edge header-edge-end">
             <button
               type="button"
-              className="icon-round"
-              onClick={() => {
-                setMenuOpen(false)
-                setSearchOpen((v) => !v)
-              }}
-              aria-expanded={searchOpen}
-              aria-controls="search-drawer"
-              aria-label={searchOpen ? 'إغلاق البحث' : 'بحث في المنتجات'}
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <path
-                  d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                />
-                <path
-                  d="M16 16l4.2 4.2"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
-            <button
-              type="button"
               className="cart-trigger"
+              ref={cartBtnRef}
               onClick={onOpenCart}
               aria-label="فتح سلة المشتريات"
             >
@@ -146,6 +160,59 @@ export function Header({ products, onOpenCart, itemCount, logoSrc, logoAlt }: Pr
             </button>
           </div>
         </header>
+
+        <div className="header-search-strip">
+          <label className="header-search-field" htmlFor="header-search-input">
+            <span className="header-search-field-icon" aria-hidden>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                />
+                <path
+                  d="M16 16l4.2 4.2"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </span>
+            <input
+              ref={searchInputRef}
+              id="header-search-input"
+              type="search"
+              enterKeyHint="search"
+              inputMode="search"
+              dir="auto"
+              autoComplete="off"
+              className="header-search-input"
+              placeholder="ابحث عن عطر أو النوع…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-controls={searchQuery.trim() ? 'main-search-results' : undefined}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setSearchQuery('')
+                  searchInputRef.current?.blur()
+                }
+              }}
+            />
+            {searchQuery ? (
+              <button
+                type="button"
+                className="header-search-clear"
+                aria-label="مسح البحث"
+                onClick={() => {
+                  setSearchQuery('')
+                  searchInputRef.current?.focus()
+                }}
+              >
+                ×
+              </button>
+            ) : null}
+          </label>
+        </div>
       </div>
 
       <NavDrawer
@@ -156,11 +223,7 @@ export function Header({ products, onOpenCart, itemCount, logoSrc, logoAlt }: Pr
         onCartPreview={goCartPreview}
         onCheckout={goCheckout}
         onTrack={goTrack}
-      />
-      <SearchDrawer
-        products={products}
-        open={searchOpen}
-        onClose={() => setSearchOpen(false)}
+        onAbout={showAboutNav ? goAbout : undefined}
       />
     </>
   )

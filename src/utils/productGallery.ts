@@ -1,8 +1,9 @@
+import { DEFAULT_PRODUCT_PRIMARY_IMAGE } from '../constants/productMedia'
 import type { Product } from '../types'
 
 /** صور المعرض: الصورة الرئيسية أولاً ثم الروابط الإضافية بدون تكرار */
 export function productGalleryUrls(p: Product): string[] {
-  const main = (p.image || '').trim()
+  const main = (p.image || '').trim() || DEFAULT_PRODUCT_PRIMARY_IMAGE
   const extras = Array.isArray(p.images)
     ? p.images.map((u) => String(u).trim()).filter(Boolean)
     : []
