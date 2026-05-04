@@ -10,6 +10,12 @@ import multer from 'multer'
 import { readStore, mutateStore, writeStore, UPLOAD_DIR, ensureUploadDir } from './store.mjs'
 import { buildOwnerWhatsAppMessage, whatsappUrl } from './whatsapp.mjs'
 import {
+  sendOrderConfirmationToCustomer,
+  sendOrderConfirmationToOwner,
+  sendShippingNotification,
+  sendStatusUpdateToCustomer,
+} from './mailer.mjs'
+import {
   sanitizeFooterNavGroups,
   sanitizeHomeFeatures,
   sanitizeHomeSections,
@@ -79,13 +85,18 @@ const uploadVideo = multer({
 
 app.use('/uploads', express.static(UPLOAD_DIR))
 
-function randomPublicCode() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  let out = ''
-  for (let i = 0; i < 8; i++) {
-    out += chars[crypto.randomInt(0, chars.length)]
+function findOrderByPublicCode(store, param) {
+  const p = String(param || '').trim()
+  if (!p) return null
+  const upper = p.toUpperCase()
+  let o = store.orders.find((x) => x.publicCode === upper)
+  if (o) return o
+  if (/^\d+$/.test(p)) {
+    const padded = p.padStart(6, '0')
+    o = store.orders.find((x) => x.publicCode === padded)
+    if (o) return o
   }
-  return out
+  return store.orders.find((x) => x.publicCode === p) || null
 }
 
 /** صور إضافية للمعرض (بدون تكرار) */
@@ -122,14 +133,6 @@ function normalizeProductTags(input) {
   return null
 }
 
-function uniquePublicCode(store) {
-  for (let n = 0; n < 50; n++) {
-    const c = randomPublicCode()
-    if (!store.orders.some((o) => o.publicCode === c)) return c
-  }
-  return randomPublicCode() + crypto.randomInt(10, 99)
-}
-
 function adminAuth(req, res, next) {
   const h = req.headers.authorization
   if (!h?.startsWith('Bearer ')) {
@@ -161,6 +164,7 @@ function publicSettings(store) {
     footerPhone: s.footerPhone ?? '',
     footerCopyright: s.footerCopyright ?? '',
     whatsappPhoneE164: s.whatsappPhoneE164 ?? '',
+    whatsappNumber: s.whatsappPhoneE164 ?? '',
     categoriesBlockTitle: s.categoriesBlockTitle ?? 'فئات',
     headerLogoUrl: s.headerLogoUrl ?? '',
     headerLogoAlt: s.headerLogoAlt ?? '',
@@ -246,9 +250,8 @@ app.get('/api/news', (_req, res) => {
 
 /** تفاصيل طلب للعميل برقم العرض العام */
 app.get('/api/orders/public/:code', (req, res) => {
-  const code = String(req.params.code || '').toUpperCase()
   const store = readStore()
-  const order = store.orders.find((o) => o.publicCode === code)
+  const order = findOrderByPublicCode(store, req.params.code)
   if (!order) {
     return res.status(404).json({ error: 'الطلب غير موجود' })
   }
@@ -260,6 +263,9 @@ app.get('/api/orders/public/:code', (req, res) => {
       trackingNumber: order.trackingNumber,
       customerName: order.customerName,
       phone: order.phone,
+      email: order.email ?? '',
+      country: order.country ?? '',
+      region: order.region ?? '',
       city: order.city,
       address: order.address,
       extraNotes: order.extraNotes,
@@ -271,9 +277,8 @@ app.get('/api/orders/public/:code', (req, res) => {
 
 /** إعادة توليد رابط واتساب لإشعار المالك (بعد إعادة تحميل الصفحة مثلاً) */
 app.get('/api/orders/public/:code/whatsapp', (req, res) => {
-  const code = String(req.params.code || '').toUpperCase()
   const store = readStore()
-  const order = store.orders.find((o) => o.publicCode === code)
+  const order = findOrderByPublicCode(store, req.params.code)
   if (!order) {
     return res.status(404).json({ error: 'الطلب غير موجود' })
   }
@@ -292,7 +297,10 @@ app.post('/api/orders', (req, res) => {
   const {
     customerName = '',
     phone = '',
+    email = '',
+    country = '',
     city = '',
+    region = '',
     address = '',
     extraNotes = '',
   } = customer
@@ -300,7 +308,16 @@ app.post('/api/orders', (req, res) => {
     return res.status(400).json({ error: 'الاسم مطلوب' })
   }
   if (!String(phone).trim()) {
-    return res.status(400).json({ error: 'الجوال مطلوب' })
+    return res.status(400).json({ error: 'رقم الهاتف مطلوب' })
+  }
+  const emailTrim = String(email).trim().toLowerCase()
+  /* مؤقت: البريد اختياري — إن وُجد يجب أن يكون صالحاً */
+  if (emailTrim && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrim)) {
+    return res.status(400).json({ error: 'البريد الإلكتروني غير صالح' })
+  }
+  const countryTrim = String(country).trim()
+  if (!countryTrim) {
+    return res.status(400).json({ error: 'الدولة مطلوبة' })
   }
   if (!String(city).trim()) {
     return res.status(400).json({ error: 'المدينة مطلوبة' })
@@ -308,6 +325,7 @@ app.post('/api/orders', (req, res) => {
   if (!String(address).trim()) {
     return res.status(400).json({ error: 'العنوان مطلوب' })
   }
+  const regionTrim = String(region || '').trim()
 
   const qtyByProduct = new Map()
   for (const raw of lines) {
@@ -361,7 +379,13 @@ app.post('/api/orders', (req, res) => {
       }
     }
 
-    const publicCode = uniquePublicCode(s)
+    const prevN =
+      typeof s.lastOrderNumber === 'number' && Number.isFinite(s.lastOrderNumber) && s.lastOrderNumber >= 0
+        ? s.lastOrderNumber
+        : 0
+    const nextN = prevN + 1
+    s.lastOrderNumber = nextN
+    const publicCode = String(nextN).padStart(6, '0')
     const id = crypto.randomUUID()
     const createdAt = new Date().toISOString()
 
@@ -373,6 +397,9 @@ app.post('/api/orders', (req, res) => {
       trackingNumber: null,
       customerName: String(customerName).trim(),
       phone: String(phone).trim(),
+      email: emailTrim,
+      country: countryTrim,
+      region: regionTrim,
       city: String(city).trim(),
       address: String(address).trim(),
       extraNotes: String(extraNotes || '').trim(),
@@ -391,6 +418,10 @@ app.post('/api/orders', (req, res) => {
     return res.status(500).json({ error: 'فشل إنشاء الطلب' })
   }
 
+  const storeName = readStore().settings.storeName
+  void sendOrderConfirmationToOwner(order, storeName)
+  void sendOrderConfirmationToCustomer(order, storeName)
+
   res.status(201).json({
     order: {
       publicCode: order.publicCode,
@@ -399,6 +430,9 @@ app.post('/api/orders', (req, res) => {
       trackingNumber: order.trackingNumber,
       customerName: order.customerName,
       phone: order.phone,
+      email: order.email,
+      country: order.country,
+      region: order.region,
       city: order.city,
       address: order.address,
       extraNotes: order.extraNotes,
@@ -425,16 +459,21 @@ app.get('/api/admin/orders', adminAuth, (_req, res) => {
 
 app.patch('/api/admin/orders/:id', adminAuth, (req, res) => {
   const { id } = req.params
-  const { status, trackingNumber } = req.body || {}
+  const { status: bodyStatus, trackingNumber } = req.body || {}
   const allowed = ['pending', 'confirmed', 'shipped', 'cancelled']
+  if (bodyStatus !== undefined && !allowed.includes(bodyStatus)) {
+    return res.status(400).json({ error: 'حالة الطلب غير صالحة' })
+  }
   let updated = null
+  let prevStatus = null
+  let statusChanged = false
+
   mutateStore((s) => {
     const o = s.orders.find((x) => x.id === id)
     if (!o) return
-    const prevStatus = o.status
-    if (status !== undefined) {
-      if (!allowed.includes(status)) return
-      if (status === 'cancelled' && prevStatus !== 'cancelled') {
+    prevStatus = o.status
+    if (bodyStatus !== undefined) {
+      if (bodyStatus === 'cancelled' && prevStatus !== 'cancelled') {
         for (const line of o.lines) {
           const p = s.products.find((x) => x.id === line.productId)
           const stock = p?.stockQuantity
@@ -443,18 +482,28 @@ app.patch('/api/admin/orders/:id', adminAuth, (req, res) => {
           }
         }
       }
-      o.status = status
+      o.status = bodyStatus
+      statusChanged = prevStatus !== o.status
     }
     if (trackingNumber !== undefined) {
-      o.trackingNumber = trackingNumber === null || trackingNumber === ''
-        ? null
-        : String(trackingNumber)
+      o.trackingNumber =
+        trackingNumber === null || trackingNumber === '' ? null : String(trackingNumber)
     }
     updated = o
   })
   if (!updated) {
     return res.status(404).json({ error: 'الطلب غير موجود' })
   }
+
+  const storeName = readStore().settings.storeName
+  if (statusChanged && bodyStatus !== undefined) {
+    if (bodyStatus === 'shipped') {
+      void sendShippingNotification(updated, storeName)
+    } else if (bodyStatus === 'confirmed' || bodyStatus === 'cancelled') {
+      void sendStatusUpdateToCustomer(updated, storeName)
+    }
+  }
+
   res.json({ order: updated })
 })
 

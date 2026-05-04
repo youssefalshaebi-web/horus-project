@@ -1,71 +1,63 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
+import { Link } from 'react-router-dom'
+import { resolveMediaUrl } from '../config'
+import type { PublicSiteSettings } from '../types'
 
 type Props = {
   open: boolean
   onClose: () => void
-  onHome: () => void
+  siteSettings: PublicSiteSettings
   onOpenCart: () => void
-  /** معاينة الطلب فقط (بدون نموذج إتمام) */
-  onCartPreview: () => void
-  onCheckout: () => void
-  onTrack: () => void
-  onAbout?: () => void
 }
 
-function IconCartBag() {
+function socialHref(raw: string): string | null {
+  const t = raw.trim()
+  if (!t) return null
+  if (/^https?:\/\//i.test(t)) return t
+  return `https://${t}`
+}
+
+function DrawerRowLink({
+  to,
+  hash,
+  icon,
+  label,
+  onNavigate,
+}: {
+  to: string
+  hash?: string
+  icon: string
+  label: string
+  onNavigate: () => void
+}) {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M6 6h15l-1.5 9h-12L6 6zm0 0L5 3H2"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx="9" cy="20" r="1.3" fill="currentColor" />
-      <circle cx="18" cy="20" r="1.3" fill="currentColor" />
-    </svg>
+    <Link
+      to={hash !== undefined ? { pathname: to, hash } : to}
+      className="nav-drawer-lux-link"
+      onClick={onNavigate}
+    >
+      <span className="nav-drawer-lux-emoji" aria-hidden>
+        {icon}
+      </span>
+      <span className="nav-drawer-lux-label">{label}</span>
+    </Link>
   )
 }
 
-/** نفس الأيقونة لـ «معاينة السلة» و«إتمام الطلب» */
-function IconOrderFlow() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v0a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v0Z"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M9 12h6M9 16h4"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-}
+export function NavDrawer({ open, onClose, siteSettings, onOpenCart }: Props) {
+  const logoSrc = resolveMediaUrl(siteSettings.headerLogoUrl)
+  const storeLabel = siteSettings.storeName.trim() || 'HORUS parfum'
 
-export function NavDrawer({
-  open,
-  onClose,
-  onHome,
-  onOpenCart,
-  onCartPreview,
-  onCheckout,
-  onTrack,
-  onAbout,
-}: Props) {
+  const socials = useMemo(() => {
+    const rows = [
+      { key: 'ig', label: 'إنستقرام', href: socialHref(siteSettings.socialInstagram) },
+      { key: 'tt', label: 'تيك توك', href: socialHref(siteSettings.socialTiktok) },
+      { key: 'sc', label: 'سناب شات', href: socialHref(siteSettings.socialSnapchat) },
+      { key: 'tw', label: 'X', href: socialHref(siteSettings.socialTwitter) },
+    ].filter((s): s is { key: string; label: string; href: string } => Boolean(s.href))
+    return rows
+  }, [siteSettings])
+
   useEffect(() => {
     if (!open) return
     function onKey(e: KeyboardEvent) {
@@ -87,73 +79,143 @@ export function NavDrawer({
       />
       <div
         id="nav-drawer"
-        className="search-drawer is-open"
+        className="search-drawer nav-drawer-lux is-open"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="nav-drawer-title"
+        aria-labelledby="nav-drawer-brand-label"
       >
-        <div className="search-drawer-head">
-          <h2 id="nav-drawer-title" className="search-drawer-title">
-            القائمة
-          </h2>
+        <header className="nav-drawer-lux-head">
+          <div className="nav-drawer-lux-brand" id="nav-drawer-brand-label">
+            {logoSrc ? (
+              <img
+                src={logoSrc}
+                alt={(siteSettings.headerLogoAlt || storeLabel).trim()}
+                className="nav-drawer-lux-logo"
+              />
+            ) : (
+              <>
+                <div className="nav-drawer-lux-wordmark" dir="ltr">
+                  <span className="nav-drawer-lux-wordmark-horus">HORUS</span>
+                  <span className="nav-drawer-lux-wordmark-parfum">parfum</span>
+                </div>
+                {storeLabel.toLowerCase() !== 'horus parfum' ? (
+                  <p className="nav-drawer-lux-tagline" dir="auto">
+                    {storeLabel}
+                  </p>
+                ) : null}
+              </>
+            )}
+          </div>
           <button
             type="button"
-            className="icon-btn search-drawer-close"
+            className="icon-btn nav-drawer-lux-close"
             onClick={onClose}
             aria-label="إغلاق القائمة"
           >
             ×
           </button>
-        </div>
+        </header>
 
-        <div className="search-drawer-body nav-drawer-body">
-          <ul className="nav-menu-drawer-list">
-            <li>
-              <button type="button" className="nav-menu-drawer-link" onClick={onHome}>
-                الرئيسية
-              </button>
-            </li>
-            {onAbout ? (
+        <div className="search-drawer-body nav-drawer-lux-body">
+          <nav className="nav-drawer-lux-nav" aria-label="تصفح المتجر">
+            <p className="nav-drawer-lux-section-title">تصفح</p>
+            <ul className="nav-drawer-lux-list">
               <li>
-                <button type="button" className="nav-menu-drawer-link" onClick={onAbout}>
-                  عن المتجر
+                <DrawerRowLink to="/" icon="🏠" label="الرئيسية" onNavigate={onClose} />
+              </li>
+              <li>
+                <DrawerRowLink
+                  to="/"
+                  hash="catalog"
+                  icon="🛍️"
+                  label="جميع العطور"
+                  onNavigate={onClose}
+                />
+              </li>
+              <li>
+                <DrawerRowLink
+                  to="/"
+                  hash="catalog-womens"
+                  icon="👩"
+                  label="عطور نسائية"
+                  onNavigate={onClose}
+                />
+              </li>
+              <li>
+                <DrawerRowLink
+                  to="/"
+                  hash="catalog-mens"
+                  icon="👨"
+                  label="عطور رجالية"
+                  onNavigate={onClose}
+                />
+              </li>
+              <li>
+                <DrawerRowLink
+                  to="/"
+                  hash="catalog-gifts"
+                  icon="🎁"
+                  label="هدايا وعروض"
+                  onNavigate={onClose}
+                />
+              </li>
+              <li>
+                <DrawerRowLink to="/news" icon="📰" label="الأخبار" onNavigate={onClose} />
+              </li>
+              {siteSettings.aboutPage.enabled ? (
+                <li>
+                  <DrawerRowLink to="/about" icon="ℹ️" label="عن المتجر" onNavigate={onClose} />
+                </li>
+              ) : null}
+            </ul>
+          </nav>
+
+          <div className="nav-drawer-lux-rule" aria-hidden />
+
+          <nav className="nav-drawer-lux-nav" aria-label="طلباتي">
+            <p className="nav-drawer-lux-section-title">طلباتي</p>
+            <ul className="nav-drawer-lux-list">
+              <li>
+                <button type="button" className="nav-drawer-lux-link" onClick={() => onOpenCart()}>
+                  <span className="nav-drawer-lux-emoji" aria-hidden>
+                    🛒
+                  </span>
+                  <span className="nav-drawer-lux-label">سلتي</span>
                 </button>
               </li>
+              <li>
+                <DrawerRowLink to="/track" icon="📦" label="تتبع طلبي" onNavigate={onClose} />
+              </li>
+            </ul>
+          </nav>
+
+          <div className="nav-drawer-lux-foot">
+            {socials.length > 0 ? (
+              <div className="nav-drawer-lux-social">
+                <p className="nav-drawer-lux-section-title nav-drawer-lux-section-title--foot">
+                  تابعنا
+                </p>
+                <ul className="nav-drawer-lux-social-list">
+                  {socials.map((s) => (
+                    <li key={s.key}>
+                      <a
+                        href={s.href}
+                        className="nav-drawer-lux-social-link"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={onClose}
+                      >
+                        {s.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ) : null}
-            <li>
-              <button type="button" className="nav-menu-drawer-link nav-menu-drawer-link--row" onClick={onOpenCart}>
-                <span className="nav-menu-drawer-icon" aria-hidden>
-                  <IconCartBag />
-                </span>
-                <span>سلة المشتريات</span>
-              </button>
-            </li>
-            <li>
-              <button
-                type="button"
-                className="nav-menu-drawer-link nav-menu-drawer-link--row"
-                onClick={onCartPreview}
-              >
-                <span className="nav-menu-drawer-icon" aria-hidden>
-                  <IconOrderFlow />
-                </span>
-                <span>معاينة السلة</span>
-              </button>
-            </li>
-            <li>
-              <button type="button" className="nav-menu-drawer-link nav-menu-drawer-link--row" onClick={onCheckout}>
-                <span className="nav-menu-drawer-icon" aria-hidden>
-                  <IconOrderFlow />
-                </span>
-                <span>إتمام الطلب</span>
-              </button>
-            </li>
-            <li>
-              <button type="button" className="nav-menu-drawer-link" onClick={onTrack}>
-                تتبع الطلب
-              </button>
-            </li>
-          </ul>
+            {siteSettings.footerCopyright.trim() ? (
+              <p className="nav-drawer-lux-copy">{siteSettings.footerCopyright}</p>
+            ) : null}
+          </div>
         </div>
       </div>
     </>

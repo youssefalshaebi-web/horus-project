@@ -33,6 +33,12 @@ export function mergePublicSiteSettings(raw: Partial<PublicSiteSettings> | null)
       typeof raw.footerCopyright === 'string' ? raw.footerCopyright : d.footerCopyright,
     whatsappPhoneE164:
       typeof raw.whatsappPhoneE164 === 'string' ? raw.whatsappPhoneE164 : d.whatsappPhoneE164,
+    whatsappNumber:
+      typeof raw.whatsappNumber === 'string'
+        ? raw.whatsappNumber
+        : typeof raw.whatsappPhoneE164 === 'string'
+          ? raw.whatsappPhoneE164
+          : d.whatsappNumber,
     categoriesBlockTitle:
       typeof raw.categoriesBlockTitle === 'string'
         ? raw.categoriesBlockTitle

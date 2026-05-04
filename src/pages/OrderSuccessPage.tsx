@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react'
-import { Link, useLocation, useOutletContext, useParams } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link, useOutletContext, useParams } from 'react-router-dom'
 import { StorefrontPromoStrip } from '../components/storefront/StorefrontPromoStrip'
 import type { OrderStatus, PublicOrder, ShopOutletContext } from '../types'
 import { formatPrice } from '../utils/formatPrice'
 import { apiJson } from '../api/client'
+import { whatsappChatUrl } from '../utils/whatsappLink'
 
 function statusLabel(s: OrderStatus): string {
   switch (s) {
@@ -21,19 +22,41 @@ function statusLabel(s: OrderStatus): string {
 }
 
 type OrderRes = { order: PublicOrder }
-type WaRes = { whatsappUrl: string }
+
+/** نص رسالة واتساب للمالك — يُكمَل برقم المخزَّن في الإعدادات كـ whatsappPhoneE164 */
+function buildCustomerWhatsAppOrderMessage(order: PublicOrder): string {
+  const productsLines = order.lines.map((l) => `• ${l.name} × ${l.quantity}`).join('\n')
+  const parts: string[] = [
+    'مرحباً، أرسل طلبي التالي عبر الموقع:',
+    '',
+    `رقم الطلب: ${order.publicCode}`,
+    `الاسم: ${order.customerName}`,
+    '',
+    'المنتجات:',
+    productsLines,
+    '',
+    `المبلغ الإجمالي: ${formatPrice(order.total)}`,
+    '',
+    'عنوان التوصيل:',
+    order.address,
+  ]
+  if (order.region?.trim()) {
+    parts.push(`المنطقة/الحي: ${order.region.trim()}`)
+  }
+  parts.push(`المدينة: ${order.city}`, `الدولة: ${order.country}`)
+  return parts.join('\n')
+}
 
 export function OrderSuccessPage() {
   const { code } = useParams<{ code: string }>()
   const { siteSettings } = useOutletContext<ShopOutletContext>()
   const uo = siteSettings.uiOrderSuccess
-  const location = useLocation()
-  const initialWa =
-    (location.state as { whatsappUrl?: string } | null)?.whatsappUrl ?? null
 
   const [order, setOrder] = useState<PublicOrder | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [whatsappUrl, setWhatsappUrl] = useState<string | null>(initialWa)
+
+  /** رقم واتساب المالك (يُزوَّد من الخادم كـ `whatsappNumber` متماثل مع `whatsappPhoneE164`) */
+  const ownerWhatsappNumber = siteSettings.whatsappNumber
 
   const loadOrder = useCallback(async () => {
     if (!code) return
@@ -57,19 +80,12 @@ export function OrderSuccessPage() {
     return () => window.clearInterval(t)
   }, [code, loadOrder])
 
-  useEffect(() => {
-    if (whatsappUrl || !code) return
-    ;(async () => {
-      try {
-        const data = await apiJson<WaRes>(
-          `/api/orders/public/${encodeURIComponent(code)}/whatsapp`,
-        )
-        setWhatsappUrl(data.whatsappUrl)
-      } catch {
-        /* يكفي زر غير متوفر */
-      }
-    })()
-  }, [code, whatsappUrl])
+  const sendOrderWhatsappHref = useMemo(() => {
+    if (!order) return null
+    const digits = ownerWhatsappNumber.replace(/\D/g, '')
+    if (digits.length < 8) return null
+    return whatsappChatUrl(ownerWhatsappNumber, buildCustomerWhatsAppOrderMessage(order))
+  }, [order, ownerWhatsappNumber])
 
   if (!code) {
     return (
@@ -100,6 +116,16 @@ export function OrderSuccessPage() {
           <span>{uo.orderCodeLabel}</span>
           <strong className="order-code">{order.publicCode}</strong>
         </div>
+        {sendOrderWhatsappHref ? (
+          <a
+            href={sendOrderWhatsappHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="order-success-whatsapp-btn"
+          >
+            أرسل طلبك عبر واتساب 📲
+          </a>
+        ) : null}
         <div className="order-code-row">
           <span>{uo.statusLabel}</span>
           <strong>{statusLabel(order.status)}</strong>
@@ -139,17 +165,6 @@ export function OrderSuccessPage() {
         </Link>
         .
       </p>
-
-      {whatsappUrl ? (
-        <a
-          href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn btn-primary btn-block wa-notify"
-        >
-          {uo.whatsappLabel}
-        </a>
-      ) : null}
 
       <Link to="/" className="link-btn back-link">
         {uo.continueLabel}

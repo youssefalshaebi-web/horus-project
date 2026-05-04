@@ -32,7 +32,7 @@ export function TrackOrderPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const c = code.trim().toUpperCase()
+    const c = code.trim()
     if (!c) {
       setError('أدخل رقم الطلب')
       return
@@ -67,7 +67,7 @@ export function TrackOrderPage() {
           <input
             type="text"
             value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            onChange={(e) => setCode(e.target.value)}
             placeholder={ut.codePlaceholder}
             autoComplete="off"
           />

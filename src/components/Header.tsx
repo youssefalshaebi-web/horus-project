@@ -1,11 +1,13 @@
 import { useEffect, useRef } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { useShopChrome } from '../context/ShopChromeContext'
 import { SEARCH_SNAP_KEY } from '../utils/browseRestore'
+import type { PublicSiteSettings } from '../types'
 import { NavDrawer } from './NavDrawer'
 
 type Props = {
+  siteSettings: PublicSiteSettings
   onOpenCart: () => void
   itemCount: number
   /** لوصف رابط الرئيسية لقارئ الشاشة (مثلاً اسم المتجر) */
@@ -13,19 +15,17 @@ type Props = {
   /** شعار الصورة — يُعرض بدلاً من الشعار النصي */
   headerLogoSrc?: string
   headerLogoAlt?: string
-  showAboutNav?: boolean
 }
 
 export function Header({
+  siteSettings,
   onOpenCart,
   itemCount,
   homeAriaLabel,
   headerLogoSrc,
   headerLogoAlt,
-  showAboutNav,
 }: Props) {
   const location = useLocation()
-  const navigate = useNavigate()
   const { menuOpen, setMenuOpen, searchQuery, setSearchQuery } = useShopChrome()
   const { cartActivityGeneration } = useCart()
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -63,37 +63,12 @@ export function Header({
     onOpenCart()
   }
 
-  function goCheckout() {
-    closeMenu()
-    navigate('/checkout')
-  }
-
-  function goCartPreview() {
-    closeMenu()
-    navigate('/cart-preview')
-  }
-
-  function goTrack() {
-    closeMenu()
-    navigate('/track')
-  }
-
-  function goHome() {
-    closeMenu()
-    navigate('/')
-  }
-
-  function goAbout() {
-    closeMenu()
-    navigate('/about')
-  }
-
   const logoSrc = headerLogoSrc?.trim()
   const logoAltText = (headerLogoAlt || homeAriaLabel).trim() || 'HORUS parfum'
 
   return (
     <>
-      <div className="header-wrap">
+      <div className="header-wrap layout-full-bleed">
         <header className="site-header">
           <div className="header-edge header-edge-start">
             <button
@@ -218,12 +193,8 @@ export function Header({
       <NavDrawer
         open={menuOpen}
         onClose={closeMenu}
-        onHome={goHome}
+        siteSettings={siteSettings}
         onOpenCart={openCartFromMenu}
-        onCartPreview={goCartPreview}
-        onCheckout={goCheckout}
-        onTrack={goTrack}
-        onAbout={showAboutNav ? goAbout : undefined}
       />
     </>
   )

@@ -42,12 +42,12 @@ function CustomerLayoutInner({ products, siteSettings }: ShopOutletContext) {
     <>
       {showAnn ? <AnnouncementBar text={siteSettings.announcementBar} /> : null}
       <Header
+        siteSettings={siteSettings}
         itemCount={itemCount}
         onOpenCart={() => setCartOpen(true)}
         homeAriaLabel={siteSettings.headerLogoAlt || siteSettings.storeName}
         headerLogoSrc={resolveMediaUrl(siteSettings.headerLogoUrl) || undefined}
         headerLogoAlt={siteSettings.headerLogoAlt}
-        showAboutNav={siteSettings.aboutPage.enabled === true}
       />
       {!searching ? (
         <StorefrontPromoStrip slots={siteSettings.promoSlots} placement="global_after_header" />

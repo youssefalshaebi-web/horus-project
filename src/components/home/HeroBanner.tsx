@@ -107,7 +107,7 @@ export function HeroBanner({ heroBanner }: Props) {
   const active = slides[index]!
 
   return (
-    <section className="hero-banner" aria-label="بانر الرئيسية">
+    <section className="hero-banner layout-full-bleed" aria-label="بانر الرئيسية">
       <div className="hero-banner-viewport">
         <HeroSlidePane key={active.id} slide={active} />
       </div>

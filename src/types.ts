@@ -171,7 +171,10 @@ export type UiCheckout = {
   showExtraNotes: boolean
   fieldNameLabel: string
   fieldPhoneLabel: string
+  fieldEmailLabel: string
+  fieldCountryLabel: string
   fieldCityLabel: string
+  fieldRegionLabel: string
   fieldAddressLabel: string
   fieldNotesLabel: string
 }
@@ -277,6 +280,8 @@ export type PublicSiteSettings = {
   footerPhone: string
   footerCopyright: string
   whatsappPhoneE164: string
+  /** نفس قيمة واتساب المالك — مكرر للوضوح في الواجهة (يُملأ من الخادم من `whatsappPhoneE164`) */
+  whatsappNumber: string
   categoriesBlockTitle: string
   headerLogoUrl: string
   headerLogoAlt: string
@@ -338,7 +343,10 @@ export type CartLine = {
 export type CheckoutFields = {
   customerName: string
   phone: string
+  email: string
+  country: string
   city: string
+  region: string
   address: string
   extraNotes: string
 }
@@ -360,6 +368,9 @@ export type PublicOrder = {
   trackingNumber: string | null
   customerName: string
   phone: string
+  email: string
+  country: string
+  region: string
   city: string
   address: string
   extraNotes: string

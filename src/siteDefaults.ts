@@ -237,6 +237,7 @@ export function defaultPublicSiteSettings(): PublicSiteSettings {
     footerPhone: '',
     footerCopyright: '',
     whatsappPhoneE164: '',
+    whatsappNumber: '',
     categoriesBlockTitle: 'فئات',
     headerLogoUrl: '',
     headerLogoAlt: '',

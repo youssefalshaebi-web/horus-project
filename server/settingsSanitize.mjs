@@ -230,7 +230,10 @@ function sanitizeUiCheckout(input) {
     showExtraNotes: r.showExtraNotes !== false,
     fieldNameLabel: clip(r.fieldNameLabel, 120) || d.fieldNameLabel,
     fieldPhoneLabel: clip(r.fieldPhoneLabel, 120) || d.fieldPhoneLabel,
+    fieldEmailLabel: clip(r.fieldEmailLabel, 120) || d.fieldEmailLabel,
+    fieldCountryLabel: clip(r.fieldCountryLabel, 120) || d.fieldCountryLabel,
     fieldCityLabel: clip(r.fieldCityLabel, 120) || d.fieldCityLabel,
+    fieldRegionLabel: clip(r.fieldRegionLabel, 120) || d.fieldRegionLabel,
     fieldAddressLabel: clip(r.fieldAddressLabel, 120) || d.fieldAddressLabel,
     fieldNotesLabel: clip(r.fieldNotesLabel, 120) || d.fieldNotesLabel,
   }

@@ -146,6 +146,34 @@ function normalizeStore(data) {
     data.orders = []
     changed = true
   }
+  if (typeof data.lastOrderNumber !== 'number' || !Number.isFinite(data.lastOrderNumber) || data.lastOrderNumber < 0) {
+    let maxN = 0
+    for (const o of data.orders) {
+      if (!o || typeof o !== 'object') continue
+      const c = String(o.publicCode || '').trim()
+      if (/^\d{1,9}$/.test(c)) {
+        const n = parseInt(c, 10)
+        if (n > maxN) maxN = n
+      }
+    }
+    data.lastOrderNumber = maxN
+    changed = true
+  }
+  for (const o of data.orders) {
+    if (!o || typeof o !== 'object') continue
+    if (o.email === undefined) {
+      o.email = ''
+      changed = true
+    }
+    if (o.country === undefined) {
+      o.country = ''
+      changed = true
+    }
+    if (o.region === undefined) {
+      o.region = ''
+      changed = true
+    }
+  }
   if (!Array.isArray(data.news)) {
     data.news = []
     changed = true

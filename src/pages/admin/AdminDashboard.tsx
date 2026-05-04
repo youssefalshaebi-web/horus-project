@@ -290,7 +290,11 @@ function OrderAdminCard({
         </span>
       </div>
       <p className="admin-mini">
-        {order.customerName} — {order.phone} — {order.city}
+        {order.customerName} — {order.phone} — {order.email}
+      </p>
+      <p className="admin-mini">
+        {order.country} — {order.city}
+        {order.region ? ` — ${order.region}` : ''}
       </p>
       <p className="admin-mini">{order.address}</p>
       <ul className="order-lines-list compact">
@@ -1090,7 +1094,10 @@ function AdminSettings() {
           'total',
           'customerName',
           'phone',
+          'email',
+          'country',
           'city',
+          'region',
           'address',
           'extraNotes',
           'trackingNumber',
@@ -1109,7 +1116,10 @@ function AdminSettings() {
             csvEscapeCell(o.total),
             csvEscapeCell(o.customerName),
             csvEscapeCell(o.phone),
+            csvEscapeCell(o.email ?? ''),
+            csvEscapeCell(o.country ?? ''),
             csvEscapeCell(o.city),
+            csvEscapeCell(o.region ?? ''),
             csvEscapeCell(o.address),
             csvEscapeCell(o.extraNotes),
             csvEscapeCell(o.trackingNumber ?? ''),

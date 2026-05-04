@@ -10,9 +10,14 @@ export function buildOwnerWhatsAppMessage(order, storeName) {
   const customer = [
     `الاسم: ${order.customerName}`,
     `الجوال: ${order.phone}`,
+    `البريد: ${order.email || '—'}`,
+    `الدولة: ${order.country || '—'}`,
     `المدينة: ${order.city}`,
+    order.region ? `المنطقة/الحي: ${order.region}` : null,
     `العنوان: ${order.address}`,
-  ].join('\n')
+  ]
+    .filter(Boolean)
+    .join('\n')
 
   const items = order.lines.map(
     (l) =>

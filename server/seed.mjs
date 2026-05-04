@@ -436,6 +436,7 @@ export function getDefaultStore() {
     products: [...getBaseProducts(), ...getDemoProducts()],
     orders: [],
     news: [],
+    lastOrderNumber: 0,
     _internal: {
       demoProductsSeeded: true,
       homeCatalogLayout: true,
